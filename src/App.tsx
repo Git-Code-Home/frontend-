@@ -6,6 +6,22 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
+// Admin pages
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+
+// Employee pages
+import EmployeeLogin from "./pages/employee/EmployeeLogin";
+import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
+
+// Client pages
+import ClientLogin from "./pages/client/ClientLogin";
+import ClientRegister from "./pages/client/ClientRegister";
+import ClientDashboard from "./pages/client/ClientDashboard";
+
+// Public pages
+import StatusCheck from "./pages/StatusCheck";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -16,6 +32,23 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          
+          {/* Employee Routes */}
+          <Route path="/employee/login" element={<EmployeeLogin />} />
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          
+          {/* Client Routes */}
+          <Route path="/client/login" element={<ClientLogin />} />
+          <Route path="/client/register" element={<ClientRegister />} />
+          <Route path="/client/dashboard" element={<ClientDashboard />} />
+          
+          {/* Public Routes */}
+          <Route path="/status" element={<StatusCheck />} />
+          
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
