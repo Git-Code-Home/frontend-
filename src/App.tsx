@@ -1,8 +1,12 @@
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Loader from "@/components/Loader"; // 👈 Import Loader
+
+// Pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -32,51 +36,148 @@ import ClientNewApplication from "./pages/client/ClientNewApplication";
 
 // Public pages
 import StatusCheck from "./pages/StatusCheck";
+import AdminRoute from "./lib/AdminRoute";
+import EmployeeRoute from "./lib/EmployeeRoute";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/employees" element={<AdminEmployees />} />
-          <Route path="/admin/clients" element={<AdminClients />} />
-          <Route path="/admin/applications" element={<AdminApplications />} />
-          <Route path="/admin/reports" element={<AdminReports />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          
-          {/* Employee Routes */}
-          <Route path="/employee/login" element={<EmployeeLogin />} />
-          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
-          <Route path="/employee/clients" element={<EmployeeClients />} />
-          <Route path="/employee/applications" element={<EmployeeApplications />} />
-          <Route path="/employee/new-application" element={<EmployeeNewApplication />} />
-          <Route path="/employee/profile" element={<EmployeeProfile />} />
-          
-          {/* Client Routes */}
-          <Route path="/client/login" element={<ClientLogin />} />
-          <Route path="/client/register" element={<ClientRegister />} />
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
-          <Route path="/client/applications" element={<ClientApplications />} />
-          <Route path="/client/new-application" element={<ClientNewApplication />} />
-          
-          {/* Public Routes */}
-          <Route path="/status" element={<StatusCheck />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+           <Route
+  path="/admin/dashboard"
+  element={
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/employees"
+  element={
+    <AdminRoute>
+      <AdminEmployees />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/clients"
+  element={
+    <AdminRoute>
+      <AdminClients />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/applications"
+  element={
+    <AdminRoute>
+      <AdminApplications />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/reports"
+  element={
+    <AdminRoute>
+      <AdminReports />
+    </AdminRoute>
+  }
+/>
+<Route
+  path="/admin/settings"
+  element={
+    <AdminRoute>
+      <AdminSettings />
+    </AdminRoute>
+  }
+/>
+
+            {/* Employee Routes */}
+            <Route path="/employee/login" element={<EmployeeLogin />} />
+<Route
+  path="/employee/dashboard"
+  element={
+    <EmployeeRoute>
+      <EmployeeDashboard />
+    </EmployeeRoute>
+  }
+/>
+
+<Route
+  path="/employee/clients"
+  element={
+    <EmployeeRoute>
+      <EmployeeClients />
+    </EmployeeRoute>
+  }
+/>
+
+<Route
+  path="/employee/applications"
+  element={
+    <EmployeeRoute>
+      <EmployeeApplications />
+    </EmployeeRoute>
+  }
+/>
+
+<Route
+  path="/employee/new-application"
+  element={
+    <EmployeeRoute>
+      <EmployeeNewApplication />
+    </EmployeeRoute>
+  }
+/>
+
+<Route
+  path="/employee/profile"
+  element={
+    <EmployeeRoute>
+      <EmployeeProfile />
+    </EmployeeRoute>
+  }
+/>
+
+
+            {/* Client Routes */}
+            <Route path="/client/login" element={<ClientLogin />} />
+            <Route path="/client/register" element={<ClientRegister />} />
+            <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/applications" element={<ClientApplications />} />
+            <Route path="/client/new-application" element={<ClientNewApplication />} />
+
+            {/* Public Routes */}
+            <Route path="/status" element={<StatusCheck />} />
+
+            {/* Catch-All Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
