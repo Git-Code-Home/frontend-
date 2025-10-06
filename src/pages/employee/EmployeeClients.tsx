@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { getMyClients, type Client } from "@/lib/employee"
 import { useToast } from "@/hooks/use-toast"
+import RegisterClientForm from "../employee/RegisterClientForm"
 
 const EmployeeClients = () => {
   const [searchTerm, setSearchTerm] = useState("")
@@ -242,13 +243,21 @@ const EmployeeClients = () => {
 
         {/* Register Client Dialog */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="sm:max-w-[520px] rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>Register New Client</DialogTitle>
-            </DialogHeader>
-            <div className="text-sm text-slate-600">Client registration form will be implemented here</div>
-          </DialogContent>
-        </Dialog>
+  <DialogContent className="sm:max-w-[520px] rounded-2xl">
+    <DialogHeader>
+      <DialogTitle>Register New Client</DialogTitle>
+    </DialogHeader>
+
+    <RegisterClientForm
+      onSuccess={(client) => {
+        setClients((prev) => [...prev, client]) 
+        setShowForm(false)
+      }}
+      onCancel={() => setShowForm(false)}
+    />
+  </DialogContent>
+</Dialog>
+
       </div>
     </DashboardLayout>
   )
