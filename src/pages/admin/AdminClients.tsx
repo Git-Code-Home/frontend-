@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Users, MapPin, Calendar, FileText, Phone, Mail, MoreHorizontal, Eye } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import BASE_URL from "@/lib/BaseUrl"
 
 interface Employee {
   _id: string
@@ -69,7 +70,7 @@ const AdminClients = () => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const response = await fetch("http://localhost:5000/api/admin/public/data")
+        const response = await fetch(`${BASE_URL}/admin/public/data`)
         
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`)

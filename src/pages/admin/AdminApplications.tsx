@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import BASE_URL from '@/lib/BaseUrl';
 
 interface Employee {
   _id: string
@@ -92,7 +93,7 @@ const AdminApplications = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:5000/api/admin/public/data");
+        const response = await fetch(`${BASE_URL}/admin/public/data`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch data: ${response.status}`);

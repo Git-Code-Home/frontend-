@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Loader2, UserPlus } from "lucide-react"
+import BASE_URL from "@/lib/BaseUrl"
 
 type FormData = {
   name: string
@@ -78,7 +79,7 @@ const RegisterClientForm: React.FC<Props> = ({ onSuccess, onCancel }) => {
 
       const payload = { ...formData, assignedTo: employeeId } // add employee ID here
 
-      const response = await fetch("http://localhost:5000/api/employee/clients", {
+      const response = await fetch(`${BASE_URL}/employee/clients`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
