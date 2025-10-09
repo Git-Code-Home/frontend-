@@ -22,6 +22,7 @@ import {
   getMyClients,
   createOrUpdateApplication,
 } from "@/lib/agent"
+import BASE_URL from "@/lib/BaseUrl"
 
 interface ApplicationDetails extends Omit<Application, 'client'> {
   documents?: {
@@ -112,7 +113,7 @@ const AgentApplication = () => {
  const fetchApplicationDetails = async (applicationId: string) => {
   try {
     setDetailsLoading(true)
-    const response = await fetch(`http://localhost:5000/api/admin/public/data?type=applications&id=${applicationId}`)
+    const response = await fetch(`${BASE_URL}/admin/public/data?type=applications&id=${applicationId}`)
     if (!response.ok) throw new Error('Failed to fetch application details')
     const data = await response.json()
     
