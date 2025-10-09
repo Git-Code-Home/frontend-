@@ -38,6 +38,12 @@ import ClientNewApplication from "./pages/client/ClientNewApplication";
 import StatusCheck from "./pages/StatusCheck";
 import AdminRoute from "./lib/AdminRoute";
 import EmployeeRoute from "./lib/EmployeeRoute";
+import AgentDashboard from "./pages/Agents/AgentDashboard";
+import AgentLogin from "./pages/Agents/AgentLogin";
+import AdminAgents from "./pages/admin/AdminAgents";
+import Agentclients from "./pages/Agents/Agentclients";
+import AgentApplication from "./pages/Agents/AgentApplication";
+import AgentRoute from "./lib/AgentRoute";
 
 const queryClient = new QueryClient();
 
@@ -61,112 +67,142 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
-
+            <Route path="/agent/dashboard" element={
+              <AgentRoute>
+               <AgentDashboard/>
+              </AgentRoute>
+              } />
+            <Route path="/agent/login"  element={<AgentLogin/>}/>
+            <Route path="/agent/clients"  element={
+                  <AgentRoute>
+                        <Agentclients/>
+                  </AgentRoute>
+               }/>
+            <Route path="/agent/applications"  element={
+                <AgentRoute>
+                <AgentApplication/>
+                </AgentRoute>
+              
+              
+              }/>
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
-           <Route
-  path="/admin/dashboard"
-  element={
-    <AdminRoute>
-      <AdminDashboard />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/employees"
-  element={
-    <AdminRoute>
-      <AdminEmployees />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/clients"
-  element={
-    <AdminRoute>
-      <AdminClients />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/applications"
-  element={
-    <AdminRoute>
-      <AdminApplications />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/reports"
-  element={
-    <AdminRoute>
-      <AdminReports />
-    </AdminRoute>
-  }
-/>
-<Route
-  path="/admin/settings"
-  element={
-    <AdminRoute>
-      <AdminSettings />
-    </AdminRoute>
-  }
-/>
+            <Route
+              path="/admin/dashboard"
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/employees"
+              element={
+                <AdminRoute>
+                  <AdminEmployees />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/clients"
+              element={
+                <AdminRoute>
+                  <AdminClients />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/agents"
+              element={
+                <AdminRoute>
+                  <AdminAgents />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/applications"
+              element={
+                <AdminRoute>
+                  <AdminApplications />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/reports"
+              element={
+                <AdminRoute>
+                  <AdminReports />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <AdminRoute>
+                  <AdminSettings />
+                </AdminRoute>
+              }
+            />
 
             {/* Employee Routes */}
             <Route path="/employee/login" element={<EmployeeLogin />} />
-<Route
-  path="/employee/dashboard"
-  element={
-    <EmployeeRoute>
-      <EmployeeDashboard />
-    </EmployeeRoute>
-  }
-/>
+            <Route
+              path="/employee/dashboard"
+              element={
+                <EmployeeRoute>
+                  <EmployeeDashboard />
+                </EmployeeRoute>
+              }
+            />
 
-<Route
-  path="/employee/clients"
-  element={
-    <EmployeeRoute>
-      <EmployeeClients />
-    </EmployeeRoute>
-  }
-/>
+            <Route
+              path="/employee/clients"
+              element={
+                <EmployeeRoute>
+                  <EmployeeClients />
+                </EmployeeRoute>
+              }
+            />
 
-<Route
-  path="/employee/applications"
-  element={
-    <EmployeeRoute>
-      <EmployeeApplications />
-    </EmployeeRoute>
-  }
-/>
+            <Route
+              path="/employee/applications"
+              element={
+                <EmployeeRoute>
+                  <EmployeeApplications />
+                </EmployeeRoute>
+              }
+            />
 
-<Route
-  path="/employee/new-application"
-  element={
-    <EmployeeRoute>
-      <EmployeeNewApplication />
-    </EmployeeRoute>
-  }
-/>
+            <Route
+              path="/employee/new-application"
+              element={
+                <EmployeeRoute>
+                  <EmployeeNewApplication />
+                </EmployeeRoute>
+              }
+            />
 
-<Route
-  path="/employee/profile"
-  element={
-    <EmployeeRoute>
-      <EmployeeProfile />
-    </EmployeeRoute>
-  }
-/>
-
+            <Route
+              path="/employee/profile"
+              element={
+                <EmployeeRoute>
+                  <EmployeeProfile />
+                </EmployeeRoute>
+              }
+            />
 
             {/* Client Routes */}
             <Route path="/client/login" element={<ClientLogin />} />
             <Route path="/client/register" element={<ClientRegister />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
-            <Route path="/client/applications" element={<ClientApplications />} />
-            <Route path="/client/new-application" element={<ClientNewApplication />} />
+            <Route
+              path="/client/applications"
+              element={<ClientApplications />}
+            />
+            <Route
+              path="/client/new-application"
+              element={<ClientNewApplication />}
+            />
 
             {/* Public Routes */}
             <Route path="/status" element={<StatusCheck />} />

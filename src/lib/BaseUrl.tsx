@@ -1,4 +1,4 @@
 
-const BASE_URL = "https://visa-management-backend.vercel.app/api"; 
+const BASE_URL = "http://localhost:5000/api"; 
 
 export default BASE_URL;

@@ -5,12 +5,12 @@ import axios from "axios"
 import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Shield, Bell } from "lucide-react"
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Shield, Bell, Wallet2, ArrowDownToLine } from "lucide-react"
 import BASE_URL from "@/lib/BaseUrl"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  userRole: "admin" | "employee" | "client"
+  userRole: "admin" | "employee" | "client" | "agent"
   userName?: string
 }
 
@@ -75,35 +75,49 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
     // </CHANGE>
   }
 
-  const navigationItems = {
-    admin: [
-      { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-      { name: "Employees", href: "/admin/employees", icon: Users },
-      { name: "Clients", href: "/admin/clients", icon: Users },
-      { name: "Applications", href: "/admin/applications", icon: FileText },
-      { name: "Reports", href: "/admin/reports", icon: LayoutDashboard },
-      { name: "Settings", href: "/admin/settings", icon: Settings },
-    ],
-    employee: [
-      { name: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
-      { name: "My Clients", href: "/employee/clients", icon: Users },
-      { name: "Applications", href: "/employee/applications", icon: FileText },
-      { name: "New Application", href: "/employee/new-application", icon: FileText },
-      { name: "Profile", href: "/employee/profile", icon: Settings },
-    ],
-    client: [
-      { name: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
-      { name: "My Applications", href: "/client/applications", icon: FileText },
-      { name: "New Application", href: "/client/new-application", icon: FileText },
-      { name: "Documents", href: "/client/documents", icon: FileText },
-      { name: "Profile", href: "/client/profile", icon: Settings },
-    ],
-  }
+ const navigationItems = {
+  admin: [
+    { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Employees", href: "/admin/employees", icon: Users },
+    { name: "Agents", href: "/admin/agents", icon: Users },
+    { name: "Clients", href: "/admin/clients", icon: Users },
+    { name: "Applications", href: "/admin/applications", icon: FileText },
+    { name: "Reports", href: "/admin/reports", icon: LayoutDashboard },
+    { name: "Settings", href: "/admin/settings", icon: Settings },
+
+  ],
+  employee: [
+    { name: "Dashboard", href: "/employee/dashboard", icon: LayoutDashboard },
+    { name: "My Clients", href: "/employee/clients", icon: Users },
+    { name: "My Agents", href: "/agents", icon: Users },
+    { name: "Applications", href: "/employee/applications", icon: FileText },
+    { name: "New Application", href: "/employee/new-application", icon: FileText },
+    { name: "Profile", href: "/employee/profile", icon: Settings },
+  ],
+  client: [
+    { name: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
+    { name: "My Applications", href: "/client/applications", icon: FileText },
+    { name: "New Application", href: "/client/new-application", icon: FileText },
+    { name: "Documents", href: "/client/documents", icon: FileText },
+    { name: "Profile", href: "/client/profile", icon: Settings },
+  ],
+  agent: [
+    { name: "Dashboard", href: "/agent/dashboard", icon: LayoutDashboard },
+    { name: "My Clients", href: "/agent/clients", icon: Users },
+    { name: "Applications", href: "/agent/applications", icon: FileText },
+    { name: "Commissions", href: "/agent/commissions", icon: Wallet2 },
+    { name: "Withdrawals", href: "/agent/withdraw", icon: ArrowDownToLine },
+    { name: "Profile", href: "/agent/profile", icon: Settings },
+  ],
+}
+
 
   const roleConfig = {
     admin: { title: "Admin Portal", color: "text-destructive" },
     employee: { title: "Employee Portal", color: "text-accent" },
     client: { title: "Client Portal", color: "text-success" },
+        agent: { title: "Agent Portal", color: "text-destructive" },
+
   }
 
   const navItems = navigationItems[userRole]

@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, FileText, Clock, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
 import useSWR from "swr"
 import BASE_URL from "@/lib/BaseUrl"
-import { useNavigate } from "react-router-dom"
 
 const fetcher = async (url: string) => {
   const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
@@ -22,9 +21,7 @@ const fetcher = async (url: string) => {
   return res.json()
 }
 
-const AdminDashboard = () => {
-    const navigate = useNavigate()
-
+const AgentDashboard = () => {
   const { data, error } = useSWR(`${BASE_URL || ""}/admin/public/data`, fetcher)
 
   const clients = Array.isArray(data?.clients) ? data.clients : []
@@ -60,16 +57,7 @@ const AdminDashboard = () => {
     },
     { title: "Revenue (AED)", value: "—", icon: DollarSign, change: "—", color: "text-success" },
   ]
- const handleAddemployee = () => {
-      navigate('/admin/employees')
- }
- const handleGenrateReport = () => {
-      navigate('/admin/reports')
- }
- const handleGenrateApplications = () => {
-      navigate('/admin/applications')
- }
- 
+
   const applicationStats = [
     { status: "Processing", count: statusCounts["Processing"] || 0, color: "bg-warning", icon: Clock },
     { status: "Approved", count: statusCounts["Approved"] || 0, color: "bg-success", icon: CheckCircle },
@@ -89,7 +77,7 @@ const AdminDashboard = () => {
     }))
 
   return (
-    <DashboardLayout userRole="admin" userName="Admin User">
+    <DashboardLayout userRole="agent" userName="zainab ahmed">
       <div className="space-y-6 sm:space-y-8">
         <div className="text-center lg:text-left">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
@@ -187,15 +175,15 @@ const AdminDashboard = () => {
               <CardTitle className="text-xl font-semibold">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <button className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 transition-all duration-200 border border-primary/20 hover:shadow-lg hover:transform hover:scale-[1.02]" onClick={handleAddemployee}>
+              <button className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 transition-all duration-200 border border-primary/20 hover:shadow-lg hover:transform hover:scale-[1.02]">
                 <div className="font-semibold text-primary">Add New Employee</div>
                 <div className="text-sm text-muted-foreground mt-1">Create employee account</div>
               </button>
-              <button onClick={handleGenrateReport} className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-accent/10 hover:from-accent/10 hover:to-accent/20 transition-all duration-200 border border-accent/20 hover:shadow-lg hover:transform hover:scale-[1.02]">
+              <button className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-accent/5 to-accent/10 hover:from-accent/10 hover:to-accent/20 transition-all duration-200 border border-accent/20 hover:shadow-lg hover:transform hover:scale-[1.02]">
                 <div className="font-semibold text-accent">Generate Report</div>
                 <div className="text-sm text-muted-foreground mt-1">Monthly analytics report</div>
               </button>
-              <button onClick={handleGenrateApplications} className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-warning/5 to-warning/10 hover:from-warning/10 hover:to-warning/20 transition-all duration-200 border border-warning/20 hover:shadow-lg hover:transform hover:scale-[1.02]">
+              <button className="w-full text-left p-4 rounded-2xl bg-gradient-to-r from-warning/5 to-warning/10 hover:from-warning/10 hover:to-warning/20 transition-all duration-200 border border-warning/20 hover:shadow-lg hover:transform hover:scale-[1.02]">
                 <div className="font-semibold text-warning">Review Expiring Visas</div>
                 <div className="text-sm text-muted-foreground mt-1">Check renewal alerts</div>
               </button>
@@ -254,4 +242,4 @@ const AdminDashboard = () => {
   )
 }
 
-export default AdminDashboard
+export default AgentDashboard

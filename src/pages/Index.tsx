@@ -21,6 +21,13 @@ const Index = () => {
       features: ['Client Registration', 'Application Processing', 'Document Upload', 'Status Updates']
     },
     {
+      title: 'Agent  Portal',
+      description: 'Handle client applications and document processing',
+      icon: Users,
+      href: '/Agent/login',
+      features: ['Client Registration', 'Application Processing', 'Document Upload', 'Status Updates']
+    },
+    {
       title: 'Client Portal',
       description: 'Submit applications and track your visa status',
       icon: FileText,
