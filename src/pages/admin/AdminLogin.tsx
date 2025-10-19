@@ -164,7 +164,11 @@ const AdminLogin = () => {
       const data = await response.json()
 
       if (response.ok) {
-       localStorage.setItem("userInfo", JSON.stringify(data))
+        // Save token for AdminRoute guard and optionally keep user info
+        if (data?.token) {
+          localStorage.setItem("adminToken", data.token)
+        }
+        localStorage.setItem("userInfo", JSON.stringify(data))
         toast({
           title: "Login Successful",
           description: `Welcome ${data.name}`,
