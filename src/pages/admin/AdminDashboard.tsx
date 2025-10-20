@@ -580,62 +580,99 @@ const AdminDashboard = () => {
         <Card className="shadow-2xl border-0 rounded-3xl bg-gradient-to-br from-card to-card/50 backdrop-blur-sm mt-8">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg sm:text-xl font-semibold">Client Documents</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">All documents uploaded by employees for client applications</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {applications.map((app: any) => (
-                app.documents && Object.keys(app.documents).length > 0 ? (
-                  <div key={app._id} className="border-b pb-4 mb-4">
-                    <div className="font-semibold mb-2">
-                      Application for: {app.client?.name || "Unknown"} ({app._id?.toString().slice(-6).toUpperCase()})
+              {applications.map((app: any) => {
+                // Filter valid documents (non-null, non-empty)
+                const validDocs = app.documents ? 
+                  Object.entries(app.documents).filter(([_, url]: [string, any]) => url && url.toString().trim() !== '') 
+                  : [];
+                
+                if (validDocs.length === 0) return null;
+
+                return (
+                  <div key={app._id} className="border-b border-muted/30 pb-6 mb-6 last:border-b-0">
+                    <div className="mb-3">
+                      <div className="font-semibold text-base">
+                        {app.client?.name || "Unknown Client"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Application ID: {app._id?.toString().slice(-6).toUpperCase()} • 
+                        Visa Type: {app.visaType || "N/A"} • 
+                        Status: {normStatus(app)}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {Object.entries(app.documents).map(([docType, docUrl]: [string, string]) => (
-                        <div key={docType} className="flex flex-col items-start p-3 rounded-xl bg-muted/10">
-                          <span className="font-medium mb-2">{docType.charAt(0).toUpperCase() + docType.slice(1)}</span>
-                          <button
-                            className="text-primary underline text-sm mb-1"
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              try {
-                                const response = await fetch(docUrl, { mode: 'cors' });
-                                if (!response.ok) throw new Error('Failed to fetch file');
-                                const blob = await response.blob();
-                                const url = window.URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                // Try to infer file extension from URL or response
-                                const ext = docUrl.split('.').pop()?.split('?')[0] || 'file';
-                                a.download = `${docType}.${ext}`;
-                                document.body.appendChild(a);
-                                a.click();
-                                setTimeout(() => {
-                                  window.URL.revokeObjectURL(url);
-                                  a.remove();
-                                }, 100);
-                              } catch (err) {
-                                alert('Download failed. Try right-clicking and opening in a new tab.');
-                              }
-                            }}
-                          >
-                            Download
-                          </button>
-                          <a
-                            href={docUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground underline text-xs ml-2"
-                          >
-                            View
-                          </a>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {validDocs.map(([docType, docUrl]: [string, any]) => (
+                        <div key={docType} className="flex flex-col p-4 rounded-2xl bg-gradient-to-br from-muted/20 to-muted/5 border border-muted/30 hover:shadow-lg transition-all">
+                          <div className="flex items-center mb-3">
+                            <FileText className="h-4 w-4 text-primary mr-2" />
+                            <span className="font-medium">{docType.charAt(0).toUpperCase() + docType.slice(1)}</span>
+                          </div>
+                          <div className="flex gap-3">
+                            <button
+                              className="text-primary hover:text-primary/80 underline text-sm font-medium"
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                try {
+                                  const response = await fetch(docUrl.toString(), { 
+                                    mode: 'cors',
+                                    headers: {
+                                      'Accept': '*/*'
+                                    }
+                                  });
+                                  if (!response.ok) throw new Error('Failed to fetch file');
+                                  const blob = await response.blob();
+                                  const url = window.URL.createObjectURL(blob);
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  // Try to infer file extension from URL or response
+                                  const urlStr = docUrl.toString();
+                                  const ext = urlStr.split('.').pop()?.split('?')[0] || 'file';
+                                  const clientName = (app.client?.name || 'client').replace(/\s+/g, '_');
+                                  a.download = `${clientName}_${docType}.${ext}`;
+                                  document.body.appendChild(a);
+                                  a.click();
+                                  setTimeout(() => {
+                                    window.URL.revokeObjectURL(url);
+                                    a.remove();
+                                  }, 100);
+                                } catch (err) {
+                                  console.error('Download error:', err);
+                                  alert('Download failed. The file might be protected or unavailable. Try opening in a new tab instead.');
+                                }
+                              }}
+                            >
+                              Download
+                            </button>
+                            <a
+                              href={docUrl.toString()}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-muted-foreground hover:text-foreground underline text-sm"
+                            >
+                              View
+                            </a>
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ) : null
-              ))}
-              {applications.filter((app: any) => app.documents && Object.keys(app.documents).length > 0).length === 0 && (
-                <div className="text-sm text-muted-foreground">No client documents uploaded yet.</div>
+                );
+              })}
+              {applications.filter((app: any) => {
+                const validDocs = app.documents ? 
+                  Object.entries(app.documents).filter(([_, url]: [string, any]) => url && url.toString().trim() !== '') 
+                  : [];
+                return validDocs.length > 0;
+              }).length === 0 && (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                  <p className="text-muted-foreground">No client documents uploaded yet.</p>
+                  <p className="text-sm text-muted-foreground mt-1">Documents uploaded by employees will appear here.</p>
+                </div>
               )}
             </div>
           </CardContent>
