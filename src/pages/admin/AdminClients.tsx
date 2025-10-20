@@ -715,7 +715,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Users, Calendar, FileText, Phone, Mail, MoreHorizontal, Eye } from "lucide-react"
+import { Search, Users, Calendar, FileText, Phone, Mail, MoreHorizontal, Eye, Download } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -787,11 +787,13 @@ const AdminClients = () => {
   const [appsOpen, setAppsOpen] = useState(false)
   const [reassignOpen, setReassignOpen] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
+  const [documentsOpen, setDocumentsOpen] = useState(false)
 
   const [activeClientId, setActiveClientId] = useState<string | null>(null)
   const [clientDetails, setClientDetails] = useState<Client | null>(null)
   const [clientApplications, setClientApplications] = useState<Application[]>([])
   const [clientActivity, setClientActivity] = useState<any[]>([])
+  const [clientDocuments, setClientDocuments] = useState<any[]>([])
 
   // reassign state
   const [employeesList, setEmployeesList] = useState<Employee[]>([])
@@ -1026,6 +1028,75 @@ const AdminClients = () => {
     }
   }
 
+  // Download Documents
+  const onViewDocuments = async (clientId: string) => {
+    setActiveClientId(clientId)
+    setClientDocuments([])
+    setDocumentsOpen(true)
+    try {
+      const res = await fetch(`${apiBase}/api/admin/clients/${clientId}/applications`, { headers: getAuthHeaders() })
+      if (!res.ok) throw new Error(`Failed to load applications (${res.status})`)
+      const body = await res.json()
+      const apps = Array.isArray(body) ? body : body.applications || []
+      
+      // Extract all documents from all applications
+      const allDocs: any[] = []
+      apps.forEach((app: any) => {
+        if (app.documents) {
+          Object.entries(app.documents).forEach(([docType, docUrl]) => {
+            if (docUrl && typeof docUrl === 'string') {
+              allDocs.push({
+                applicationId: app._id,
+                visaType: app.visaType || 'N/A',
+                docType,
+                docUrl,
+                createdAt: app.createdAt
+              })
+            }
+          })
+        }
+      })
+      setClientDocuments(allDocs)
+    } catch (err) {
+      console.error("Failed to load documents:", err)
+      setClientDocuments([])
+    }
+  }
+
+  // Format document label for display
+  const formatDocLabel = (key: string): string => {
+    const labels: Record<string, string> = {
+      passport: "Passport",
+      photo: "Photo",
+      idCard: "ID Card",
+      birthCertificate: "Birth Certificate",
+      bForm: "B-Form",
+      passportFirstPage: "Passport First Page",
+      passportCoverPage: "Passport Cover Page",
+      paymentReceipt: "Payment Receipt"
+    }
+    return labels[key] || key
+  }
+
+  // Download document
+  const downloadDocument = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url)
+      const blob = await response.blob()
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      console.error('Failed to download document:', err)
+      alert('Failed to download document')
+    }
+  }
+
   // ----- Rendering -----
   if (loading) {
     return (
@@ -1232,6 +1303,10 @@ const AdminClients = () => {
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Applications
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => onViewDocuments(client._id)}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Download Documents
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => onOpenReassign(client._id)}>
                                 <Users className="mr-2 h-4 w-4" />
                                 Reassign Employee
@@ -1398,6 +1473,53 @@ const AdminClients = () => {
             </div>
             <DialogFooter>
               <Button onClick={() => setActivityOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Documents Modal */}
+        <Dialog open={documentsOpen} onOpenChange={setDocumentsOpen}>
+          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Client Documents</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {clientDocuments.length === 0 ? (
+                <p className="text-center py-8 text-muted-foreground">No documents found for this client.</p>
+              ) : (
+                <div className="space-y-4">
+                  {clientDocuments.map((doc, idx) => (
+                    <div key={idx} className="p-4 border rounded-lg bg-muted/5 hover:bg-muted/10 transition-colors">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-4 w-4 text-primary" />
+                            <span className="font-semibold">{formatDocLabel(doc.docType)}</span>
+                          </div>
+                          <div className="space-y-1 text-sm text-muted-foreground">
+                            <div>Application: {doc.visaType}</div>
+                            <div>Date: {formatDate(doc.createdAt)}</div>
+                            <div className="text-xs truncate max-w-md" title={doc.docUrl}>
+                              URL: {doc.docUrl}
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => downloadDocument(doc.docUrl, `${formatDocLabel(doc.docType)}_${doc.applicationId}.${doc.docUrl.split('.').pop()}`)}
+                          className="rounded-full"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setDocumentsOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
