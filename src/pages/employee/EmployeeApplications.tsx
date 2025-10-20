@@ -116,14 +116,14 @@ const EmployeeApplications = () => {
         console.log("[v0] Uploading documents for application:", applicationId)
         await uploadApplicationDocuments({
           applicationId,
-          passport: passportFile || undefined,
-          photo: photoFile || undefined,
-          idCard: idCardFile || undefined,
-          birthCertificate: birthCertificateFile || undefined,
-          bForm: bFormFile || undefined,
-          passportFirstPage: passportFirstPageFile || undefined,
-          passportCoverPage: passportCoverPageFile || undefined,
-          paymentReceipt: paymentReceiptFile || undefined,
+          passport: passportFile,
+          photo: photoFile,
+          idCard: idCardFile,
+          birthCertificate: birthCertificateFile,
+          bForm: bFormFile,
+          passportFirstPage: passportFirstPageFile,
+          passportCoverPage: passportCoverPageFile,
+          paymentReceipt: paymentReceiptFile,
         })
         console.log("[v0] Documents uploaded successfully")
       }
