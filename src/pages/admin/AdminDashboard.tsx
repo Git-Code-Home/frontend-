@@ -593,14 +593,40 @@ const AdminDashboard = () => {
                       {Object.entries(app.documents).map(([docType, docUrl]: [string, string]) => (
                         <div key={docType} className="flex flex-col items-start p-3 rounded-xl bg-muted/10">
                           <span className="font-medium mb-2">{docType.charAt(0).toUpperCase() + docType.slice(1)}</span>
+                          <button
+                            className="text-primary underline text-sm mb-1"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              try {
+                                const response = await fetch(docUrl, { mode: 'cors' });
+                                if (!response.ok) throw new Error('Failed to fetch file');
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                // Try to infer file extension from URL or response
+                                const ext = docUrl.split('.').pop()?.split('?')[0] || 'file';
+                                a.download = `${docType}.${ext}`;
+                                document.body.appendChild(a);
+                                a.click();
+                                setTimeout(() => {
+                                  window.URL.revokeObjectURL(url);
+                                  a.remove();
+                                }, 100);
+                              } catch (err) {
+                                alert('Download failed. Try right-clicking and opening in a new tab.');
+                              }
+                            }}
+                          >
+                            Download
+                          </button>
                           <a
                             href={docUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            download
-                            className="text-primary underline text-sm mb-1"
+                            className="text-muted-foreground underline text-xs ml-2"
                           >
-                            View / Download
+                            View
                           </a>
                         </div>
                       ))}
