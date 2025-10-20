@@ -129,7 +129,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -145,6 +145,18 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { toast } = useToast()
+
+  // Warm the backend/DB on page open to avoid cold start timeouts
+  useEffect(() => {
+    const warmup = async () => {
+      try {
+        await fetch(`${BASE_URL}/api/health/db`, { method: "GET" })
+      } catch (_) {
+        // ignore - this is a best-effort warmup
+      }
+    }
+    warmup()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
