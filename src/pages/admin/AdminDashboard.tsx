@@ -575,6 +575,45 @@ const AdminDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Client Documents Section */}
+        <Card className="shadow-2xl border-0 rounded-3xl bg-gradient-to-br from-card to-card/50 backdrop-blur-sm mt-8">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg sm:text-xl font-semibold">Client Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {applications.map((app: any) => (
+                app.documents && Object.keys(app.documents).length > 0 ? (
+                  <div key={app._id} className="border-b pb-4 mb-4">
+                    <div className="font-semibold mb-2">
+                      Application for: {app.client?.name || "Unknown"} ({app._id?.toString().slice(-6).toUpperCase()})
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {Object.entries(app.documents).map(([docType, docUrl]: [string, string]) => (
+                        <div key={docType} className="flex flex-col items-start p-3 rounded-xl bg-muted/10">
+                          <span className="font-medium mb-2">{docType.charAt(0).toUpperCase() + docType.slice(1)}</span>
+                          <a
+                            href={docUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download
+                            className="text-primary underline text-sm mb-1"
+                          >
+                            View / Download
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null
+              ))}
+              {applications.filter((app: any) => app.documents && Object.keys(app.documents).length > 0).length === 0 && (
+                <div className="text-sm text-muted-foreground">No client documents uploaded yet.</div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   )
