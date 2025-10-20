@@ -690,14 +690,14 @@ const EmployeeApplications = () => {
                                 variant="outline"
                                 className="text-xs rounded-full border-emerald-200 text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50"
                               >
-                                ✓ Receipt Uploaded
+                                Paid
                               </Badge>
                             ) : (
                               <Badge
                                 variant="outline"
                                 className="text-xs rounded-full border-amber-200 text-amber-700 bg-gradient-to-r from-amber-50 to-orange-50"
                               >
-                                ⏳ Payment Pending
+                                Pending
                               </Badge>
                             )}
                           </div>
