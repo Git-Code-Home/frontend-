@@ -64,9 +64,15 @@ const EmployeeApplications = () => {
   const [openCreate, setOpenCreate] = useState(false)
   const [clientId, setClientId] = useState("")
   const [visaTypeCreate, setVisaTypeCreate] = useState("")
+  const [visaDuration, setVisaDuration] = useState("")
   const [passportFile, setPassportFile] = useState<File | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [idCardFile, setIdCardFile] = useState<File | null>(null)
+  const [birthCertificateFile, setBirthCertificateFile] = useState<File | null>(null)
+  const [bFormFile, setBFormFile] = useState<File | null>(null)
+  const [passportFirstPageFile, setPassportFirstPageFile] = useState<File | null>(null)
+  const [passportCoverPageFile, setPassportCoverPageFile] = useState<File | null>(null)
+  const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
@@ -102,16 +108,22 @@ const EmployeeApplications = () => {
       }
 
       console.log("[v0] Creating application with clientId:", clientId, "visaType:", visaTypeCreate)
-      const { applicationId } = await createApplication({ clientId, visaType: visaTypeCreate })
+      const { applicationId } = await createApplication({ clientId, visaType: visaTypeCreate, visaDuration })
       console.log("[v0] Application created with ID:", applicationId)
 
-      if (applicationId && (passportFile || photoFile || idCardFile)) {
+      if (applicationId && (passportFile || photoFile || idCardFile || birthCertificateFile || bFormFile || 
+          passportFirstPageFile || passportCoverPageFile || paymentReceiptFile)) {
         console.log("[v0] Uploading documents for application:", applicationId)
         await uploadApplicationDocuments({
           applicationId,
           passport: passportFile || undefined,
           photo: photoFile || undefined,
           idCard: idCardFile || undefined,
+          birthCertificate: birthCertificateFile || undefined,
+          bForm: bFormFile || undefined,
+          passportFirstPage: passportFirstPageFile || undefined,
+          passportCoverPage: passportCoverPageFile || undefined,
+          paymentReceipt: paymentReceiptFile || undefined,
         })
         console.log("[v0] Documents uploaded successfully")
       }
@@ -123,9 +135,15 @@ const EmployeeApplications = () => {
 
       setClientId("")
       setVisaTypeCreate("")
+      setVisaDuration("")
       setPassportFile(null)
       setPhotoFile(null)
       setIdCardFile(null)
+      setBirthCertificateFile(null)
+      setBFormFile(null)
+      setPassportFirstPageFile(null)
+      setPassportCoverPageFile(null)
+      setPaymentReceiptFile(null)
       setOpenCreate(false)
     } catch (err: any) {
       console.error("[v0] Error creating application:", err)
@@ -304,7 +322,7 @@ const EmployeeApplications = () => {
             <DialogTrigger asChild>
               <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white">+ Create Application</Button>
             </DialogTrigger>
-            <DialogContent className="rounded-2xl sm:max-w-lg">
+            <DialogContent className="rounded-2xl sm:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Application</DialogTitle>
               </DialogHeader>
@@ -334,48 +352,136 @@ const EmployeeApplications = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="visaType">Visa Type</Label>
-                  <Select value={visaTypeCreate} onValueChange={setVisaTypeCreate}>
-                    <SelectTrigger id="visaType" className="rounded-2xl">
-                      <SelectValue placeholder="Select visa type" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl">
-                      <SelectItem value="Tourist Visa">Tourist Visa</SelectItem>
-                      <SelectItem value="Business Visa">Business Visa</SelectItem>
-                      <SelectItem value="Family Visa">Family Visa</SelectItem>
-                      <SelectItem value="Transit Visa">Transit Visa</SelectItem>
-                    </SelectContent>
-                  </Select>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="visaType">Visa Type</Label>
+                    <Select value={visaTypeCreate} onValueChange={setVisaTypeCreate}>
+                      <SelectTrigger id="visaType" className="rounded-2xl">
+                        <SelectValue placeholder="Select visa type" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        <SelectItem value="Tourist Visa">Tourist Visa</SelectItem>
+                        <SelectItem value="Business Visa">Business Visa</SelectItem>
+                        <SelectItem value="Family Visa">Family Visa</SelectItem>
+                        <SelectItem value="Transit Visa">Transit Visa</SelectItem>
+                        <SelectItem value="Work Visa">Work Visa</SelectItem>
+                        <SelectItem value="Student Visa">Student Visa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="visaDuration">Visa Duration</Label>
+                    <Select value={visaDuration} onValueChange={setVisaDuration}>
+                      <SelectTrigger id="visaDuration" className="rounded-2xl">
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        <SelectItem value="14 days">14 Days</SelectItem>
+                        <SelectItem value="30 days">30 Days</SelectItem>
+                        <SelectItem value="60 days">60 Days</SelectItem>
+                        <SelectItem value="90 days">90 Days</SelectItem>
+                        <SelectItem value="6 months">6 Months</SelectItem>
+                        <SelectItem value="1 year">1 Year</SelectItem>
+                        <SelectItem value="2 years">2 Years</SelectItem>
+                        <SelectItem value="3 years">3 Years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="passport">Passport</Label>
-                    <Input
-                      id="passport"
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={(e) => setPassportFile(e.target.files?.[0] || null)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="photo">Photo</Label>
-                    <Input
-                      id="photo"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="idCard">ID Card</Label>
-                    <Input
-                      id="idCard"
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
-                    />
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Upload Documents (PDF, JPG, PNG)</Label>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="passport" className="text-sm">Passport</Label>
+                      <Input
+                        id="passport"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setPassportFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="photo" className="text-sm">Photo</Label>
+                      <Input
+                        id="photo"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="idCard" className="text-sm">ID Card</Label>
+                      <Input
+                        id="idCard"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="birthCertificate" className="text-sm">Birth Certificate</Label>
+                      <Input
+                        id="birthCertificate"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setBirthCertificateFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="bForm" className="text-sm">B-Form</Label>
+                      <Input
+                        id="bForm"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setBFormFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="passportFirstPage" className="text-sm">Passport First Page</Label>
+                      <Input
+                        id="passportFirstPage"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setPassportFirstPageFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="passportCoverPage" className="text-sm">Passport Cover Page</Label>
+                      <Input
+                        id="passportCoverPage"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setPassportCoverPageFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentReceipt" className="text-sm">Payment Receipt</Label>
+                      <Input
+                        id="paymentReceipt"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => setPaymentReceiptFile(e.target.files?.[0] || null)}
+                        className="rounded-2xl"
+                      />
+                    </div>
                   </div>
                 </div>
 

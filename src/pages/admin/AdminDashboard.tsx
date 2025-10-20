@@ -339,6 +339,21 @@ const AdminDashboard = () => {
     }
   }
 
+  // Format document type labels for better readability
+  const formatDocLabel = (docType: string) => {
+    const labels: Record<string, string> = {
+      passport: "Passport",
+      photo: "Photo",
+      idCard: "ID Card",
+      birthCertificate: "Birth Certificate",
+      bForm: "B-Form",
+      passportFirstPage: "Passport First Page",
+      passportCoverPage: "Passport Cover Page",
+      paymentReceipt: "Payment Receipt"
+    }
+    return labels[docType] || docType.charAt(0).toUpperCase() + docType.slice(1)
+  }
+
   const statusCounts = applications.reduce((acc: Record<string, number>, a: any) => {
     const s = normStatus(a)
     acc[s] = (acc[s] || 0) + 1
@@ -609,7 +624,7 @@ const AdminDashboard = () => {
                         <div key={docType} className="flex flex-col p-4 rounded-2xl bg-gradient-to-br from-muted/20 to-muted/5 border border-muted/30 hover:shadow-lg transition-all">
                           <div className="flex items-center mb-3">
                             <FileText className="h-4 w-4 text-primary mr-2" />
-                            <span className="font-medium">{docType.charAt(0).toUpperCase() + docType.slice(1)}</span>
+                            <span className="font-medium">{formatDocLabel(docType)}</span>
                           </div>
                           <div className="flex gap-3">
                             <button

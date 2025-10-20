@@ -244,19 +244,18 @@ import BASE_URL from "./BaseUrl"
 export type CreateApplicationInput = {
   clientId: string
   visaType: string
+  visaDuration?: string
 }
 
 export type UploadDocsInput = {
   applicationId: string
-  // existing
   passport?: File | null
   photo?: File | null
   idCard?: File | null
-  // new
+  birthCertificate?: File | null
+  bForm?: File | null
   passportFirstPage?: File | null
   passportCoverPage?: File | null
-  birthCertificate?: File | null
-  bayForm?: File | null
   paymentReceipt?: File | null
 }
 
@@ -323,6 +322,7 @@ export async function createApplication(input: CreateApplicationInput) {
     body: JSON.stringify({
       clientId: input.clientId,
       visaType: input.visaType,
+      visaDuration: input.visaDuration,
     }),
   })
 
@@ -356,7 +356,7 @@ export async function uploadApplicationDocuments(input: UploadDocsInput) {
   maybe("passportFirstPage")
   maybe("passportCoverPage")
   maybe("birthCertificate")
-  maybe("bayForm")
+  maybe("bForm")
   maybe("paymentReceipt")
 
   const res = await fetch(`${BASE_URL}/api/employee/applications/${input.applicationId}/upload`, {
