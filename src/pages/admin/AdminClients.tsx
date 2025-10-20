@@ -1424,17 +1424,65 @@ const AdminClients = () => {
               {clientApplications.length === 0 ? (
                 <p>No applications found for this client.</p>
               ) : (
-                clientApplications.map((app) => (
-                  <div key={app._id} className="p-3 border rounded-md">
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="font-medium">{app.visaType || "Application"}</div>
-                        <div className="text-sm text-muted-foreground">{app.applicationStatus || "—"}</div>
+                clientApplications.map((app) => {
+                  // Determine payment and status
+                  const hasPaymentReceipt = !!app.documents?.paymentReceipt;
+                  const isPaid = !!app.invoice?.paid;
+                  let status = "Processing";
+                  if (hasPaymentReceipt && isPaid) {
+                    status = "Ready to Approve";
+                  } else if (!hasPaymentReceipt || !isPaid) {
+                    status = "Pending";
+                  }
+                  if (app.applicationStatus === "approved") status = "Approved";
+                  if (app.applicationStatus === "rejected") status = "Rejected";
+
+                  return (
+                    <div key={app._id} className="p-3 border rounded-md">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="font-medium">{app.visaType || "Application"}</div>
+                          <div className="text-sm text-muted-foreground">Status: <span className={
+                            status === "Approved" ? "text-success" :
+                            status === "Rejected" ? "text-destructive" :
+                            status === "Pending" ? "text-warning" :
+                            status === "Ready to Approve" ? "text-primary" : "text-muted-foreground"
+                          }>{status}</span></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm text-muted-foreground">{formatDate(app.createdAt)}</div>
+                          {/* Approve/Reject buttons */}
+                          {status === "Ready to Approve" && (
+                            <Button size="sm" variant="default" onClick={async () => {
+                              await fetch(`${apiBase}/api/admin/applications/${app._id}/status`, {
+                                method: "PUT",
+                                headers: getAuthHeaders(),
+                                body: JSON.stringify({ status: "approved" })
+                              });
+                              // Refresh applications
+                              const res = await fetch(`${apiBase}/api/admin/clients/${app.client._id}/applications`, { headers: getAuthHeaders() });
+                              const body = await res.json();
+                              setClientApplications(Array.isArray(body) ? body : body.applications || []);
+                            }}>Approve</Button>
+                          )}
+                          {status !== "Rejected" && status !== "Approved" && (
+                            <Button size="sm" variant="destructive" onClick={async () => {
+                              await fetch(`${apiBase}/api/admin/applications/${app._id}/status`, {
+                                method: "PUT",
+                                headers: getAuthHeaders(),
+                                body: JSON.stringify({ status: "rejected" })
+                              });
+                              // Refresh applications
+                              const res = await fetch(`${apiBase}/api/admin/clients/${app.client._id}/applications`, { headers: getAuthHeaders() });
+                              const body = await res.json();
+                              setClientApplications(Array.isArray(body) ? body : body.applications || []);
+                            }}>Reject</Button>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">{formatDate(app.createdAt)}</div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
             <DialogFooter>
