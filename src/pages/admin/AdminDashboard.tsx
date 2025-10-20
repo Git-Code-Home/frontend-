@@ -261,6 +261,7 @@
 
 "use client"
 
+import { useEffect } from "react"
 import DashboardLayout from "@/components/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, FileText, Clock, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
@@ -278,13 +279,12 @@ const fetcher = async (url: string) => {
   try {
     const res = await fetch(url, {
       method: "GET",
-      // mode: "cors", // optional: uncomment if needed
+      mode: "cors",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      // If you use cookie-based auth for refresh tokens, enable credentials:
-      // credentials: "include",
     })
 
     // network-level error
@@ -316,6 +316,15 @@ const fetcher = async (url: string) => {
 
 const AdminDashboard = () => {
   const navigate = useNavigate()
+
+  // Check if adminToken exists, redirect to login if not
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken")
+    if (!token) {
+      console.warn("[dashboard] No adminToken found, redirecting to login")
+      navigate("/admin/login")
+    }
+  }, [navigate])
 
   // Use the real API that returns both clients and applications
   const dashboardUrl = `${BASE_URL?.replace(/\/$/, "") || ""}/api/admin/clients`
