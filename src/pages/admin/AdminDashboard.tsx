@@ -317,19 +317,50 @@ const fetcher = async (url: string) => {
 const AdminDashboard = () => {
   const navigate = useNavigate()
 
-  // Build the URL explicitly so it's easy to inspect in logs.
-  // If your backend uses a different path (e.g. /api/admin/public/data) update it here.
-  const dashboardUrl = `${BASE_URL?.replace(/\/$/, "") || ""}/admin/public/data`
+  // Use the real API that returns both clients and applications
+  const dashboardUrl = `${BASE_URL?.replace(/\/$/, "") || ""}/api/admin/clients`
   const { data, error } = useSWR(dashboardUrl, fetcher)
 
   const clients = Array.isArray(data?.clients) ? data.clients : []
   const applications = Array.isArray(data?.applications) ? data.applications : []
 
+  // Normalize status (some docs may have `status`, others `applicationStatus`)
+  const normStatus = (app: any) => {
+    const raw = (app?.applicationStatus || app?.status || "processing").toString().toLowerCase()
+    switch (raw) {
+      case "approved":
+        return "Approved"
+      case "rejected":
+        return "Rejected"
+      case "pending":
+        return "Pending"
+      default:
+        return "Processing"
+    }
+  }
+
   const statusCounts = applications.reduce((acc: Record<string, number>, a: any) => {
-    const s = (a?.status || "Processing") as string
+    const s = normStatus(a)
     acc[s] = (acc[s] || 0) + 1
     return acc
   }, {})
+
+  // Expiring visas = applications with an expiryDate within next 30 days
+  const expiringWithinDays = (days = 30) => {
+    const now = Date.now()
+    const ms = days * 24 * 60 * 60 * 1000
+    return applications.filter((a: any) => {
+      const exp = a?.expiryDate ? new Date(a.expiryDate).getTime() : NaN
+      return Number.isFinite(exp) && exp - now <= ms && exp - now >= 0
+    }).length
+  }
+
+  // Total revenue (AED) = sum of paid invoices
+  const totalRevenue = applications.reduce((sum: number, a: any) => {
+    const paid = a?.invoice?.paid
+    const amt = Number(a?.invoice?.amount) || 0
+    return sum + (paid ? amt : 0)
+  }, 0)
 
   const stats = [
     {
@@ -348,12 +379,12 @@ const AdminDashboard = () => {
     },
     {
       title: "Expiring Visas",
-      value: String(statusCounts["Expired"] || 0),
+      value: String(expiringWithinDays(30)),
       icon: Clock,
       change: "+0%",
       color: "text-warning",
     },
-    { title: "Revenue (AED)", value: "—", icon: DollarSign, change: "—", color: "text-success" },
+    { title: "Revenue (AED)", value: totalRevenue.toLocaleString(), icon: DollarSign, change: "—", color: "text-success" },
   ]
   const handleAddemployee = () => {
     navigate('/admin/employees')
@@ -369,7 +400,7 @@ const AdminDashboard = () => {
     { status: "Processing", count: statusCounts["Processing"] || 0, color: "bg-warning", icon: Clock },
     { status: "Approved", count: statusCounts["Approved"] || 0, color: "bg-success", icon: CheckCircle },
     { status: "Rejected", count: statusCounts["Rejected"] || 0, color: "bg-destructive", icon: XCircle },
-    { status: "Expired", count: statusCounts["Expired"] || 0, color: "bg-muted", icon: AlertTriangle },
+    { status: "Pending", count: statusCounts["Pending"] || 0, color: "bg-muted", icon: AlertTriangle },
   ]
 
   const recentApplications = [...applications]
