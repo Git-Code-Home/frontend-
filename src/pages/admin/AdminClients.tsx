@@ -762,7 +762,14 @@ interface Application {
     idCard?: string
     passport?: string
     photo?: string
+    birthCertificate?: string
+    bForm?: string
+    passportFirstPage?: string
+    passportCoverPage?: string
+    paymentReceipt?: string
+    // add more document types if needed
   }
+  visaDuration?: string
   createdAt: string
   updatedAt: string
   __v?: number
@@ -1037,13 +1044,26 @@ const AdminClients = () => {
       const res = await fetch(`${apiBase}/api/admin/clients/${clientId}/applications`, { headers: getAuthHeaders() })
       if (!res.ok) throw new Error(`Failed to load applications (${res.status})`)
       const body = await res.json()
-      const apps = Array.isArray(body) ? body : body.applications || []
-      
+      const apps = Array.isArray(body) ? body : body.applications || [];
+
+      // List of all possible document fields
+      const docFields = [
+        'passport',
+        'photo',
+        'idCard',
+        'birthCertificate',
+        'bForm',
+        'passportFirstPage',
+        'passportCoverPage',
+        'paymentReceipt',
+      ];
+
       // Extract all documents from all applications
-      const allDocs: any[] = []
+      const allDocs: any[] = [];
       apps.forEach((app: any) => {
         if (app.documents) {
-          Object.entries(app.documents).forEach(([docType, docUrl]) => {
+          docFields.forEach((docType) => {
+            const docUrl = app.documents[docType];
             if (docUrl && typeof docUrl === 'string') {
               allDocs.push({
                 applicationId: app._id,
@@ -1051,15 +1071,15 @@ const AdminClients = () => {
                 docType,
                 docUrl,
                 createdAt: app.createdAt
-              })
+              });
             }
-          })
+          });
         }
-      })
-      setClientDocuments(allDocs)
+      });
+      setClientDocuments(allDocs);
     } catch (err) {
-      console.error("Failed to load documents:", err)
-      setClientDocuments([])
+      console.error("Failed to load documents:", err);
+      setClientDocuments([]);
     }
   }
 
