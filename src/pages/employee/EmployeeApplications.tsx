@@ -47,6 +47,11 @@ interface Application {
     passport?: string
     photo?: string
     idCard?: string
+    birthCertificate?: string
+    bForm?: string
+    passportFirstPage?: string
+    passportCoverPage?: string
+    paymentReceipt?: string
   }
   createdAt: string
   updatedAt: string
@@ -77,6 +82,12 @@ const EmployeeApplications = () => {
 
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [openDetails, setOpenDetails] = useState(false)
+
+  // Payment receipt upload state
+  const [openPaymentUpload, setOpenPaymentUpload] = useState(false)
+  const [selectedAppForPayment, setSelectedAppForPayment] = useState<Application | null>(null)
+  const [paymentReceiptUploadFile, setPaymentReceiptUploadFile] = useState<File | null>(null)
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -156,6 +167,53 @@ const EmployeeApplications = () => {
   const handleViewDetails = (application: Application) => {
     setSelectedApplication(application)
     setOpenDetails(true)
+  }
+
+  const handleOpenPaymentUpload = (application: Application) => {
+    setSelectedAppForPayment(application)
+    setOpenPaymentUpload(true)
+  }
+
+  const handleUploadPaymentReceipt = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedAppForPayment || !paymentReceiptUploadFile) {
+      toast({ title: "Missing File", description: "Please select a payment receipt to upload.", variant: "destructive" })
+      return
+    }
+
+    try {
+      setUploadingReceipt(true)
+      await uploadApplicationDocuments({
+        applicationId: selectedAppForPayment._id,
+        paymentReceipt: paymentReceiptUploadFile
+      })
+
+      toast({ title: "Success", description: "Payment receipt uploaded successfully!", variant: "default" })
+      
+      // Refresh applications
+      const updatedApplications = await getMyApplications()
+      setApplications(updatedApplications)
+      
+      // Close modal and reset state
+      setOpenPaymentUpload(false)
+      setPaymentReceiptUploadFile(null)
+      setSelectedAppForPayment(null)
+    } catch (err: any) {
+      console.error("[v0] Error uploading payment receipt:", err)
+      toast({ title: "Error", description: err?.message || "Failed to upload payment receipt", variant: "destructive" })
+    } finally {
+      setUploadingReceipt(false)
+    }
+  }
+
+  const handleMarkPaymentPending = async (application: Application) => {
+    try {
+      toast({ title: "Info", description: "Payment status marked as pending.", variant: "default" })
+      // You can add API call here if needed to update status
+    } catch (err: any) {
+      console.error("[v0] Error marking payment as pending:", err)
+      toast({ title: "Error", description: "Failed to update payment status", variant: "destructive" })
+    }
   }
 
   const getStatusColor = (status: string) => {
@@ -572,6 +630,10 @@ const EmployeeApplications = () => {
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-xl" onClick={() => handleOpenPaymentUpload(application)}>
+                              <Upload className="mr-2 h-4 w-4" />
+                              Upload Payment Receipt
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="rounded-xl">
                               <Edit className="mr-2 h-4 w-4" />
                               Update Status
@@ -616,6 +678,26 @@ const EmployeeApplications = () => {
                                 className="text-xs rounded-full border-emerald-200 text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50"
                               >
                                 ID Card
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-blue-700 mb-2">Payment Status</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {application.documents.paymentReceipt ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs rounded-full border-emerald-200 text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50"
+                              >
+                                ✓ Receipt Uploaded
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-xs rounded-full border-amber-200 text-amber-700 bg-gradient-to-r from-amber-50 to-orange-50"
+                              >
+                                ⏳ Payment Pending
                               </Badge>
                             )}
                           </div>
@@ -775,6 +857,85 @@ const EmployeeApplications = () => {
                   </Button>
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Receipt Upload Dialog */}
+        <Dialog open={openPaymentUpload} onOpenChange={setOpenPaymentUpload}>
+          <DialogContent className="rounded-2xl sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Upload Payment Receipt
+              </DialogTitle>
+            </DialogHeader>
+            {selectedAppForPayment && (
+              <form onSubmit={handleUploadPaymentReceipt} className="space-y-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-slate-700">Client:</span>
+                      <span className="text-slate-600">{selectedAppForPayment.client.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-slate-700">Visa Type:</span>
+                      <span className="text-slate-600">{selectedAppForPayment.visaType}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="paymentReceipt" className="text-sm font-medium text-slate-700">
+                    Payment Receipt File
+                  </Label>
+                  <Input
+                    id="paymentReceipt"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => setPaymentReceiptUploadFile(e.target.files?.[0] || null)}
+                    className="rounded-2xl border-slate-200 bg-white"
+                  />
+                  <p className="text-xs text-slate-500">Accepted formats: PDF, JPG, JPEG, PNG</p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-2xl bg-transparent"
+                    onClick={() => {
+                      setOpenPaymentUpload(false)
+                      setPaymentReceiptUploadFile(null)
+                      setSelectedAppForPayment(null)
+                    }}
+                    disabled={uploadingReceipt}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="rounded-2xl"
+                    onClick={() => {
+                      handleMarkPaymentPending(selectedAppForPayment)
+                      setOpenPaymentUpload(false)
+                      setSelectedAppForPayment(null)
+                    }}
+                    disabled={uploadingReceipt}
+                  >
+                    Mark as Pending
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600"
+                    disabled={uploadingReceipt || !paymentReceiptUploadFile}
+                  >
+                    {uploadingReceipt ? "Uploading..." : "Upload Receipt"}
+                  </Button>
+                </div>
+              </form>
             )}
           </DialogContent>
         </Dialog>
