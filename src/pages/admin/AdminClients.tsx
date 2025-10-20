@@ -1327,6 +1327,31 @@ const AdminClients = () => {
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Documents
                               </DropdownMenuItem>
+                              {/* Payment Receipt Option */}
+                              {(() => {
+                                // Find the latest application for this client
+                                const clientApps = applications.filter(app => app.client._id === client._id);
+                                // Find the latest (by createdAt)
+                                const latestApp = clientApps.reduce((latest, app) => {
+                                  return (!latest || new Date(app.createdAt) > new Date(latest.createdAt)) ? app : latest;
+                                }, null);
+                                const paymentReceiptUrl = latestApp?.documents?.paymentReceipt;
+                                if (paymentReceiptUrl) {
+                                  return (
+                                    <DropdownMenuItem onClick={() => downloadDocument(paymentReceiptUrl, `PaymentReceipt_${latestApp._id}.${paymentReceiptUrl.split('.').pop()}`)}>
+                                      <Download className="mr-2 h-4 w-4" />
+                                      Download Payment Receipt
+                                    </DropdownMenuItem>
+                                  );
+                                } else {
+                                  return (
+                                    <DropdownMenuItem disabled>
+                                      <FileText className="mr-2 h-4 w-4 text-muted" />
+                                      Payment Receipt: <span className="ml-2 text-warning">Pending</span>
+                                    </DropdownMenuItem>
+                                  );
+                                }
+                              })()}
                               <DropdownMenuItem onClick={() => onOpenReassign(client._id)}>
                                 <Users className="mr-2 h-4 w-4" />
                                 Reassign Employee
