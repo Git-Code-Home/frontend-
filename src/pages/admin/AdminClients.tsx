@@ -715,7 +715,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Users, Calendar, FileText, Phone, Mail, MoreHorizontal, Eye, Download } from "lucide-react"
+import { Search, Users, Calendar, FileText, Phone, Mail, MoreHorizontal, Eye, Download, RefreshCcw } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -808,6 +808,7 @@ const AdminClients = () => {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null)
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null)
   const [reassignLoading, setReassignLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   const apiBase = BASE_URL.replace(/\/$/, "")
 
@@ -821,30 +822,44 @@ const AdminClients = () => {
   }
 
   // Fetch initial clients + applications
+  const fetchData = async () => {
+    try {
+      setRefreshing(true)
+      const res = await fetch(`${apiBase}/api/admin/clients`, {
+        headers: getAuthHeaders(),
+      })
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch data: ${res.status}`)
+      }
+
+      const data: ApiResponse = await res.json()
+      setClients(Array.isArray(data.clients) ? data.clients : [])
+      setApplications(Array.isArray(data.applications) ? data.applications : [])
+    } catch (err) {
+      console.error("Error fetching data:", err)
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setRefreshing(false)
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const res = await fetch(`${apiBase}/api/admin/clients`, {
-          headers: getAuthHeaders(),
-        })
+    setLoading(true)
+    fetchData()
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch data: ${res.status}`)
-        }
-
-        const data: ApiResponse = await res.json()
-        setClients(Array.isArray(data.clients) ? data.clients : [])
-        setApplications(Array.isArray(data.applications) ? data.applications : [])
-      } catch (err) {
-        console.error("Error fetching data:", err)
-        setError(err instanceof Error ? err.message : "An error occurred")
-      } finally {
-        setLoading(false)
+    // Auto-refresh when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData()
       }
     }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
-    fetchData()
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -1142,9 +1157,21 @@ const AdminClients = () => {
     <DashboardLayout userRole="admin" userName="Admin User">
       <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Client Management</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage all registered and unregistered clients</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Client Management</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage all registered and unregistered clients</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchData}
+            disabled={refreshing}
+            className="rounded-2xl"
+          >
+            <RefreshCcw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Search & filters */}
