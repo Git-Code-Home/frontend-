@@ -294,17 +294,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { BarChart3, TrendingUp, Download, FileText, Users, DollarSign, Clock } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import BASE_URL from "@/lib/BaseUrl";
 
 const AdminReports = () => {
   const [duration, setDuration] = useState("last-6-months");
+  const [summary, setSummary] = useState<{ totalApplications: number; approvalRate: number; avgProcessingDays: number; revenue: number } | null>(null);
 
-  const reportMetrics = [
-    { title: "Total Applications", value: "1,247", change: "+12%", trend: "up", color: "text-accent" },
-    { title: "Approval Rate", value: "94.5%", change: "+2.1%", trend: "up", color: "text-success" },
-    { title: "Avg Processing Time", value: "3.2 days", change: "-0.8 days", trend: "down", color: "text-primary" },
-    { title: "Revenue (AED)", value: "485,320", change: "+18%", trend: "up", color: "text-warning" },
-  ]
+  const metrics = summary ? [
+    { title: "Total Applications", value: summary.totalApplications.toLocaleString(), change: "", trend: "up", color: "text-accent" },
+    { title: "Approval Rate", value: `${summary.approvalRate}%`, change: "", trend: "up", color: "text-success" },
+    { title: "Avg Processing Time", value: `${summary.avgProcessingDays} days`, change: "", trend: "down", color: "text-primary" },
+    { title: "Revenue (AED)", value: summary.revenue.toLocaleString(), change: "", trend: "up", color: "text-warning" },
+  ] : [
+    { title: "Total Applications", value: "—", change: "", trend: "up", color: "text-accent" },
+    { title: "Approval Rate", value: "—", change: "", trend: "up", color: "text-success" },
+    { title: "Avg Processing Time", value: "—", change: "", trend: "down", color: "text-primary" },
+    { title: "Revenue (AED)", value: "—", change: "", trend: "up", color: "text-warning" },
+  ];
 
   const monthlyData = [
     { month: "Jan", applications: 89, approved: 84, rejected: 5, revenue: 38450 },
@@ -331,12 +338,43 @@ const AdminReports = () => {
   ]
 
   const getFilteredMonthlyData = () => {
+    if (duration === "daily" || duration === "weekly") return monthlyData.slice(-1); // placeholder visualization
     if (duration === "last-30-days") return monthlyData.slice(-1);
     if (duration === "last-3-months") return monthlyData.slice(-3);
     if (duration === "last-6-months") return monthlyData;
     if (duration === "last-year") return monthlyData; // adjust as needed
     return monthlyData;
   };
+
+  const getAuthHeaders = () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    } as HeadersInit;
+  };
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const apiBase = BASE_URL.replace(/\/$/, "");
+        const res = await fetch(`${apiBase}/api/admin/reports/summary?range=${duration}` , { headers: getAuthHeaders() });
+        const body = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(body?.message || `Failed to fetch summary (${res.status})`);
+        const totals = body?.totals;
+        setSummary({
+          totalApplications: totals?.totalApplications ?? 0,
+          approvalRate: totals?.approvalRate ?? 0,
+          avgProcessingDays: totals?.avgProcessingDays ?? 0,
+          revenue: totals?.revenue ?? 0,
+        });
+      } catch (e) {
+        console.error('Failed to fetch reports summary:', e);
+        setSummary(null);
+      }
+    };
+    fetchSummary();
+  }, [duration]);
 
   const exportCSV = () => {
     const rows = [
@@ -372,6 +410,8 @@ const AdminReports = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
                 <SelectItem value="last-30-days">Last 30 Days</SelectItem>
                 <SelectItem value="last-3-months">Last 3 Months</SelectItem>
                 <SelectItem value="last-6-months">Last 6 Months</SelectItem>
@@ -387,7 +427,7 @@ const AdminReports = () => {
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {reportMetrics.map((metric) => (
+          {metrics.map((metric) => (
             <Card
               key={metric.title}
               className="shadow-2xl border-0 rounded-3xl bg-gradient-to-br from-card to-card/50 backdrop-blur-sm hover:shadow-3xl transition-all duration-300 hover:transform hover:scale-[1.02]"
