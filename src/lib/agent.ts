@@ -112,23 +112,11 @@ export async function updateAgentProfile(payload: Partial<{ name: string; phone:
 // --------------------------------------------------
 
 export async function getMyClients(): Promise<Client[]> {
-  const res = await fetch(`${BASE_URL}/admin/public/data?type=clients`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-  })
-  if (!res.ok) throw new Error(`Failed to fetch clients: ${res.statusText}`)
-  const data = await res.json()
-  return data?.clients || []
+  return apiFetch<Client[]>("/clients", { method: "GET" })
 }
 
 export async function getMyApplications(): Promise<Application[]> {
-  const res = await fetch(`${BASE_URL}/admin/public/data?type=applications`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-  })
-  if (!res.ok) throw new Error(`Failed to fetch applications: ${res.statusText}`)
-  const data = await res.json()
-  return data?.applications || []
+  return apiFetch<Application[]>("/applications", { method: "GET" })
 }
 
 // --------------------------------------------------
