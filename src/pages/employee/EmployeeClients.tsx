@@ -1396,7 +1396,7 @@
 
 
 import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import DashboardLayout from "@/components/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -1413,7 +1413,10 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { getMyClients, type Client } from "@/lib/employee"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getMyClients, type Client, assignClientToAgent } from "@/lib/employee"
+import BASE_URL from "@/lib/BaseUrl"
 import { useToast } from "@/hooks/use-toast"
 import RegisterClientForm from "./RegisterClientForm"
 
@@ -1423,6 +1426,10 @@ const EmployeeClients = () => {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
+  const [assignOpen, setAssignOpen] = useState(false)
+  const [agents, setAgents] = useState<Array<{ _id: string; name: string; email: string }>>([])
+  const [selectedAgentId, setSelectedAgentId] = useState("")
+  const [activeClientId, setActiveClientId] = useState<string>("")
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -1453,6 +1460,42 @@ const EmployeeClients = () => {
   // Dropdown action handlers
   const handleNewApplication = (id) => {
     navigate(`/employee/new-application?clientId=${id}`)
+  }
+
+  const openAssignDialog = async (clientId: string) => {
+    setActiveClientId(clientId)
+    setSelectedAgentId("")
+    // fetch agents list
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("employeeToken") : null
+      const url = `${BASE_URL.replace(/\/$/, "")}/api/public/agents`
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+      const data = await res.json().catch(() => [])
+      const list = Array.isArray(data) ? data : data?.agents || []
+      const mapped = (list || []).map((a: any) => ({ _id: a._id, name: a.name, email: a.email }))
+      setAgents(mapped)
+      setAssignOpen(true)
+    } catch (err) {
+      console.error("Failed to fetch agents:", err)
+      toast({ title: "Error", description: "Failed to load agents", variant: "destructive" })
+    }
+  }
+
+  const handleAssignClient = async () => {
+    if (!activeClientId || !selectedAgentId) return
+    try {
+      await assignClientToAgent({ clientId: activeClientId, agentId: selectedAgentId })
+      toast({ title: "Assigned", description: "Client assigned to agent successfully" })
+      setAssignOpen(false)
+    } catch (err: any) {
+      toast({ title: "Assignment failed", description: err?.message || "Unable to assign", variant: "destructive" })
+    }
   }
 
   return (
@@ -1613,6 +1656,9 @@ const EmployeeClients = () => {
                               <Plus className="h-4 w-4 mr-2" />
                               New Application
                             </DropdownMenuItem>
+                            <DropdownMenuItem className="rounded-xl cursor-pointer" onClick={() => openAssignDialog(client._id)}>
+                              Assign to Agent
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="rounded-xl">
                               <MessageCircle className="mr-2 h-4 w-4" />
                               Send Message
@@ -1642,6 +1688,44 @@ const EmployeeClients = () => {
               }}
               onCancel={() => setShowForm(false)}
             />
+          </DialogContent>
+        </Dialog>
+
+        {/* Assign to Agent Dialog */}
+        <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+          <DialogContent className="sm:max-w-[520px] rounded-2xl">
+            <DialogHeader>
+              <DialogTitle>Assign Client to Agent</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-3">
+              <div className="grid gap-2">
+                <Label>Select Agent</Label>
+                <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                  <SelectTrigger className="rounded-2xl">
+                    <SelectValue placeholder="Choose an agent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agents.length === 0 ? (
+                      <SelectItem value="no-agents" disabled>
+                        No agents available
+                      </SelectItem>
+                    ) : (
+                      agents.map((a) => (
+                        <SelectItem key={a._id} value={a._id}>
+                          {a.name} - {a.email}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setAssignOpen(false)}>Cancel</Button>
+                <Button onClick={handleAssignClient} disabled={!selectedAgentId}>
+                  Assign
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
