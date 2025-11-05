@@ -246,7 +246,6 @@ import AdminClients from "./pages/admin/AdminClients";
 import AdminApplications from "./pages/admin/AdminApplications";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
-import AdminCommissions from "./pages/admin/AdminCommission";
 import Commission from "./pages/admin/Commission";
 
 // Employee pages
@@ -364,14 +363,7 @@ const App = () => {
                 </AdminRoute>
               }
             />
-            <Route
-              path="/admin/commissions"
-              element={
-                <AdminRoute>
-                  <AdminCommissions />
-                </AdminRoute>
-              }
-            />
+            {/* legacy AdminCommissions route removed; use /admin/commission */}
             <Route
               path="/admin/commission"
               element={
