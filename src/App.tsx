@@ -247,6 +247,7 @@ import AdminApplications from "./pages/admin/AdminApplications";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminCommissions from "./pages/admin/AdminCommission";
+import Commission from "./pages/admin/Commission";
 
 // Employee pages
 import EmployeeLogin from "./pages/employee/EmployeeLogin";
@@ -368,6 +369,14 @@ const App = () => {
               element={
                 <AdminRoute>
                   <AdminCommissions />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/commission"
+              element={
+                <AdminRoute>
+                  <Commission />
                 </AdminRoute>
               }
             />

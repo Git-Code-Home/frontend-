@@ -303,11 +303,11 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
   }
 
  const navigationItems = {
-  admin: [
+    admin: [
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Employees", href: "/admin/employees", icon: Users },
     { name: "Agents", href: "/admin/agents", icon: Users },
-      { name: "Commissions", href: "/admin/commissions", icon: Wallet2 },
+    { name: "Commission", href: "/admin/commission", icon: Wallet2 },
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Applications", href: "/admin/applications", icon: FileText },
     { name: "Reports", href: "/admin/reports", icon: LayoutDashboard },
