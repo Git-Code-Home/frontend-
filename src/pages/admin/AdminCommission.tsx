@@ -40,7 +40,7 @@ const AdminCommissions: React.FC = () => {
     setError(null);
     try {
       const res = await axios.get("/api/admin/commissions", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
       });
       setCommissions(res.data);
     } catch (err: any) {
@@ -51,7 +51,7 @@ const AdminCommissions: React.FC = () => {
 
   const fetchMeta = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("adminToken");
       const [agentsRes, clientsRes] = await Promise.all([
         axios.get("/api/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
         axios.get("/api/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
@@ -85,10 +85,10 @@ const AdminCommissions: React.FC = () => {
     formData.append("paymentProof", paymentProof);
 
     try {
-      await axios.put(`/api/admin/commissions/${commissionId}/proof`, formData, {
+      await axios.put(`/api/admin/commissions/${commissionId}/receipt`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
         },
       });
       setPaymentProof(null);
@@ -103,7 +103,7 @@ const AdminCommissions: React.FC = () => {
   const handleCreateCommission = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem("token");
+  const token = localStorage.getItem("adminToken");
       const form = new FormData();
       form.append("agent_id", formAgent);
       form.append("client_id", formClient);
