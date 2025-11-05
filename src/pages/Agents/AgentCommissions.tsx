@@ -20,6 +20,7 @@ const AgentCommissions: React.FC = () => {
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<{ total: number; paid: number; pending: number } | null>(null);
 
   const fetchCommissions = async () => {
     setLoading(true);
@@ -29,6 +30,15 @@ const AgentCommissions: React.FC = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setCommissions(res.data);
+      // fetch summary
+      try {
+        const s = await axios.get("/api/agent/commissions/summary", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setSummary(s.data);
+      } catch (e) {
+        // ignore
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to fetch commissions");
     }
@@ -41,6 +51,23 @@ const AgentCommissions: React.FC = () => {
 
   return (
     <div>
+      <h1>My Commissions</h1>
+      {summary && (
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          <div style={{ padding: 12, border: "1px solid #ddd" }}>
+            <div>Total</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.total}</div>
+          </div>
+          <div style={{ padding: 12, border: "1px solid #ddd" }}>
+            <div>Received</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.paid}</div>
+          </div>
+          <div style={{ padding: 12, border: "1px solid #ddd" }}>
+            <div>Pending</div>
+            <div style={{ fontSize: 20, fontWeight: "bold" }}>{summary.pending}</div>
+          </div>
+        </div>
+      )}
       <h1>My Commissions</h1>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
