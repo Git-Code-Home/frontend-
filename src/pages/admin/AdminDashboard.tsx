@@ -261,13 +261,14 @@
 
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import DashboardLayout from "@/components/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, FileText, Clock, DollarSign, TrendingUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
 import useSWR from "swr"
 import BASE_URL from "@/lib/BaseUrl"
 import { useNavigate } from "react-router-dom"
+import axios from "axios"
 
 const fetcher = async (url: string) => {
   // debug: log URL so you can confirm exactly what is being requested
@@ -328,6 +329,37 @@ const AdminDashboard = () => {
   // Use the real API that returns both clients and applications
   const dashboardUrl = `${BASE_URL?.replace(/\/$/, "") || ""}/api/admin/clients`
   const { data, error } = useSWR(dashboardUrl, fetcher)
+
+  // Diagnostics to help debug deployment/network issues. This runs only in the browser
+  // and surfaces resolved BASE_URL and quick fetch/axios attempts so you can see
+  // whether the frontend can reach the backend and what errors appear.
+  const [diagnostics, setDiagnostics] = useState<{ baseUrl: string; fetchResult?: string; axiosResult?: string } | null>(null)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const run = async () => {
+      const base = BASE_URL?.replace(/\/$/, "") || "(not set)"
+      const results: any = { baseUrl: base }
+      try {
+        console.log("[diagnostics] attempting fetch to", dashboardUrl)
+        const res = await fetch(dashboardUrl, { method: "GET" })
+        results.fetchResult = `status:${res.status} ok:${res.ok}`
+      } catch (err: any) {
+        results.fetchResult = `fetch-error:${err && (err.message || String(err))}`
+      }
+
+      try {
+        console.log("[diagnostics] attempting axios.get to", dashboardUrl)
+        const r = await axios.get(dashboardUrl)
+        results.axiosResult = `status:${r.status}`
+      } catch (err: any) {
+        results.axiosResult = `axios-error:${err && (err.message || String(err))}`
+      }
+
+      setDiagnostics(results)
+    }
+    run()
+  }, [dashboardUrl])
 
   const clients = Array.isArray(data?.clients) ? data.clients : []
   const applications = Array.isArray(data?.applications) ? data.applications : []
@@ -447,6 +479,14 @@ const AdminDashboard = () => {
           <p className="text-muted-foreground text-base sm:text-lg mt-2">Monitor system performance and key metrics</p>
           {error ? (
             <p className="text-destructive mt-2 text-sm">Failed to load data: {String((error as any)?.message || error)}</p>
+          ) : null}
+          {diagnostics ? (
+            <div className="mt-3 text-sm bg-muted/10 p-3 rounded">
+              <div className="font-medium">Connection diagnostics</div>
+              <div className="mt-1">BASE_URL: <span className="font-mono">{diagnostics.baseUrl}</span></div>
+              <div>Fetch: <span className="font-mono">{diagnostics.fetchResult}</span></div>
+              <div>Axios: <span className="font-mono">{diagnostics.axiosResult}</span></div>
+            </div>
           ) : null}
         </div>
 
