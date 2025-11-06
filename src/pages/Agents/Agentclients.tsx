@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import DashboardLayout from "@/components/DashboardLayout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,6 +37,8 @@ const AgentClients = () => {
     }
     load()
   }, [])
+
+  const navigate = useNavigate()
 
   const getClientType = (client: Client) => (client.unqualified ? "Unqualified" : "Qualified")
 
@@ -282,17 +285,13 @@ const AgentClients = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/agent/clients/${client._id}`)}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => navigate(`/agent/clients/${client._id}/applications`)}>
                                 <FileText className="mr-2 h-4 w-4" />
                                 View Applications
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Users className="mr-2 h-4 w-4" />
-                                Reassign Employee
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
