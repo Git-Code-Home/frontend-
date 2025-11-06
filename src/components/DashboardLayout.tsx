@@ -273,16 +273,11 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
         const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
         if (!token) return
 
-        // FIX: Use the API route prefix that matches your backend mount (app.use("/api/admin", adminRoutes))
-        // Normalize BASE_URL to avoid double slashes
-        const url = `${BASE_URL.replace(/\/$/, "")}/api/admin/profile`
-        console.log("[dashboard] fetching profile from:", url)
-
-        const { data } = await axios.get(url, {
+        // Use axios baseURL and call the admin profile endpoint as a relative path.
+        // axios.defaults.baseURL is set in App.tsx to the backend root.
+        const { data } = await axios.get(`/api/admin/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        console.log("📌 Admin profile response:", data)
-
         setProfile(data)
       } catch (error) {
         console.error("❌ Failed to fetch admin profile:", error)

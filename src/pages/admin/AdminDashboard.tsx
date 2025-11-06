@@ -280,7 +280,6 @@ const fetcher = async (url: string) => {
     const res = await fetch(url, {
       method: "GET",
       mode: "cors",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -446,7 +445,9 @@ const AdminDashboard = () => {
             Dashboard Overview
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg mt-2">Monitor system performance and key metrics</p>
-          {error ? <p className="text-destructive mt-2 text-sm">Failed to load data</p> : null}
+          {error ? (
+            <p className="text-destructive mt-2 text-sm">Failed to load data: {String((error as any)?.message || error)}</p>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
