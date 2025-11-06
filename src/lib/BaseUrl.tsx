@@ -13,10 +13,15 @@ let raw = import.meta.env.VITE_API_BASE_URL || "https://visa-management-backend.
 if (typeof window !== "undefined") {
 	try {
 		const hostname = window.location.hostname
-		if (/localhost|127\.0\.0\.1/.test(raw) && hostname && !/localhost|127\.0\.0\.1/.test(hostname)) {
-			// override to the production backend domain
-			raw = "https://visa-management-backend.vercel.app"
-			console.warn("[BaseUrl] runtime override: replacing localhost env with production backend")
+		// Stronger runtime override: if the app is running on a non-localhost host
+		// (deployed) and the env value contains localhost, replace it with the
+		// production backend. Also log both values for diagnostics.
+		if (hostname && !/localhost|127\.0\.0\.1/.test(hostname)) {
+			if (/localhost|127\.0\.0\.1/.test(raw)) {
+				raw = "https://visa-management-backend.vercel.app"
+				console.warn("[BaseUrl] runtime override: replacing localhost env with production backend")
+			}
+			console.info(`[BaseUrl] runtime hostname=${hostname} raw=${raw}`)
 		}
 	} catch (err) {
 		// ignore

@@ -326,8 +326,20 @@ const AdminDashboard = () => {
     }
   }, [navigate])
 
-  // Use the real API that returns both clients and applications
-  const dashboardUrl = `${BASE_URL?.replace(/\/$/, "") || ""}/api/admin/clients`
+  // Determine API root at runtime. If the compiled BASE_URL still points to
+  // localhost while the app runs on a deployed host, override to the known
+  // production backend. This is a last-resort fallback until you set the
+  // Vercel environment variable and rebuild.
+  let apiRoot = BASE_URL?.replace(/\/$/, "") || ""
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname
+    if (host && !/localhost|127\.0\.0\.1/.test(host) && /localhost|127\.0\.0\.1/.test(apiRoot)) {
+      console.warn("[AdminDashboard] overriding apiRoot from localhost to production backend for runtime diagnostics")
+      apiRoot = "https://visa-management-backend.vercel.app"
+    }
+  }
+
+  const dashboardUrl = `${apiRoot}/api/admin/clients`
   const { data, error } = useSWR(dashboardUrl, fetcher)
 
   // Diagnostics to help debug deployment/network issues. This runs only in the browser
