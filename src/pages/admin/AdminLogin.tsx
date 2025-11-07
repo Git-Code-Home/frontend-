@@ -138,6 +138,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Shield } from "lucide-react"
 import BASE_URL from "@/lib/BaseUrl"
+import api from "@/lib/api"
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("")
@@ -167,17 +168,13 @@ const AdminLogin = () => {
       // relies on cookie-based auth and CORS is configured for credentials. This
       // app uses JWTs stored in localStorage, so we avoid credentials to reduce
       // CORS preflight/response issues.
-      const response = await fetch(`${BASE_URL}/api/admin/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      // Use axios instance so baseURL is centralized and consistent across the app
+      const response = await api.post("/admin/login", { email, password })
 
-      const data = await response.json()
+      // Normalize axios response shape to the fetch-like 'response' used below
+      const data = response.data
 
-      if (response.ok) {
+      if (response.status >= 200 && response.status < 300) {
         // Save token for AdminRoute guard and optionally keep user info
         if (data?.token) {
           localStorage.setItem("adminToken", data.token)
@@ -188,13 +185,11 @@ const AdminLogin = () => {
           description: `Welcome ${data.name}`,
         })
         navigate("/admin/dashboard")
-      } else {
-        toast({
-          title: "Login Failed",
-          description: data.message || "Invalid credentials",
-          variant: "destructive",
-        })
+        setLoading(false)
+        return
       }
+      // If we fall through here, treat it as an error
+      toast({ title: "Login Failed", description: data?.message || "Invalid credentials", variant: "destructive" })
     } catch (error) {
       toast({
         title: "Error",

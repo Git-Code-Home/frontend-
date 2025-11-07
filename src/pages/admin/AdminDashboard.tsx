@@ -353,18 +353,13 @@ const AdminDashboard = () => {
       const base = BASE_URL?.replace(/\/$/, "") || "(not set)"
       const results: any = { baseUrl: base }
       try {
-        console.log("[diagnostics] attempting fetch to", dashboardUrl)
-        const res = await fetch(dashboardUrl, { method: "GET" })
-        results.fetchResult = `status:${res.status} ok:${res.ok}`
-      } catch (err: any) {
-        results.fetchResult = `fetch-error:${err && (err.message || String(err))}`
-      }
-
-      try {
         console.log("[diagnostics] attempting axios.get to", dashboardUrl)
+        // use the imported axios instance directly (api was not defined)
         const r = await axios.get(dashboardUrl)
         results.axiosResult = `status:${r.status}`
+        results.fetchResult = `status:${r.status} ok:${r.status >= 200 && r.status < 300}`
       } catch (err: any) {
+        results.fetchResult = `fetch-error:${err && (err.message || String(err))}`
         results.axiosResult = `axios-error:${err && (err.message || String(err))}`
       }
 

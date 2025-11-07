@@ -231,6 +231,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Shield, Bell, Wallet2, ArrowDownToLine } from "lucide-react"
 import BASE_URL from "@/lib/BaseUrl"
+import api from "@/lib/api"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -275,7 +276,7 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
 
         // Use axios baseURL and call the admin profile endpoint as a relative path.
         // axios.defaults.baseURL is set in App.tsx to the backend root.
-        const { data } = await axios.get(`/api/admin/profile`, {
+        const { data } = await api.get(`/admin/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         setProfile(data)

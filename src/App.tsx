@@ -227,12 +227,7 @@
 
 
 import { useState, useEffect } from "react";
-import axios from "axios";
-import BASE_URL from "./lib/BaseUrl";
-
-// Configure axios baseURL at module initialization so all modules using axios
-// (even if imported before App component mounts) will get the correct backend.
-axios.defaults.baseURL = BASE_URL.replace(/\/$/, "");
+import api from "./lib/api";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
