@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "@/lib/api";
 
-type User = { _id: string; name: string; email: string };
+type User = { _id: string; name: string; email: string; assignedAgent?: string | any; assignedTo?: string | any };
 
 type Commission = {
   _id: string;
@@ -18,6 +18,7 @@ export default function AdminCommissions() {
   const [agents, setAgents] = useState<User[]>([]);
   const [clients, setClients] = useState<User[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
+  const [metaError, setMetaError] = useState<string | null>(null);
   const [agentId, setAgentId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
   const [applicationId, setApplicationId] = useState<string>("");
@@ -25,17 +26,23 @@ export default function AdminCommissions() {
   const [createReceipt, setCreateReceipt] = useState<File | null>(null);
 
   const fetchMeta = async () => {
+    setMetaError(null);
     try {
       const token = localStorage.getItem("adminToken");
-      // public agents endpoint exists in several places
-      const [agentsRes, clientsRes] = await Promise.all([
-        // mounted at /api/public/agents
-        api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
-        // returns { clients, applications } under /api/admin/clients
-        api.get("/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
 
-      // agentsRes.data may be an array or { agents: [...] }
+      // Try admin agents endpoint first, then fallback to public agents
+      let agentsRes;
+      try {
+        agentsRes = await api.get("/admin/agents", { headers: { Authorization: `Bearer ${token}` } });
+      } catch (e) {
+        // fallback
+        agentsRes = await api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } });
+      }
+
+      // clients endpoint (admin-only) returns { clients, applications }
+      const clientsRes = await api.get("/admin/clients", { headers: { Authorization: `Bearer ${token}` } });
+
+      // parse agents
       if (agentsRes && Array.isArray(agentsRes.data)) {
         setAgents(agentsRes.data as User[]);
       } else if (agentsRes && agentsRes.data && Array.isArray(agentsRes.data.agents)) {
@@ -44,7 +51,7 @@ export default function AdminCommissions() {
         setAgents([]);
       }
 
-      // clientsRes.data may be { clients, applications } or an array
+      // parse clients and applications
       if (!clientsRes || !clientsRes.data) {
         setClients([]);
         setApplications([]);
@@ -56,10 +63,13 @@ export default function AdminCommissions() {
         setClients(Array.isArray(cd.clients) ? cd.clients : []);
         setApplications(Array.isArray(cd.applications) ? cd.applications : []);
       }
-    } catch (e) {
-      // Show a user-friendly error and avoid crashing the page
-      console.error("Failed to load agents/clients metadata:", e);
-      alert("Failed to load agents or clients. Please check your network or auth and try again.");
+    } catch (err: any) {
+      console.error("fetchMeta error", err?.message || err);
+      setMetaError("Failed to load agents or clients. Check network/auth.");
+      // leave agents/clients/apps as empty arrays to avoid crashes
+      setAgents([]);
+      setClients([]);
+      setApplications([]);
     }
   };
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -106,6 +116,7 @@ export default function AdminCommissions() {
       await api.post("/admin/commissions", fd, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
       setAgentId("");
       setClientId("");
+  setApplicationId("");
       setAmount("");
       setCreateReceipt(null);
       await fetchCommissions();
@@ -143,7 +154,8 @@ export default function AdminCommissions() {
     <div className="p-6">
       <h1 className="text-2xl font-semibold mb-4">Commissions</h1>
       {loading && <p>Loading...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+  {error && <p className="text-red-600">{error}</p>}
+  {metaError && <p className="text-red-600">{metaError}</p>}
 
       {/* Create commission form */}
       <form onSubmit={handleCreate} className="mb-6 bg-white p-4 rounded shadow">
@@ -163,12 +175,14 @@ export default function AdminCommissions() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Client</label>
-            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="mt-1 block w-full rounded border p-2">
+            <select value={clientId} onChange={(e) => { setClientId(e.target.value); setApplicationId(""); }} className="mt-1 block w-full rounded border p-2">
               <option value="">Select client</option>
               {Array.isArray(clients) && clients.length > 0 ? (
-                clients.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
-                ))
+                // if an agent is selected, show only clients assigned to that agent
+                (agentId ? clients.filter((c) => String(c.assignedAgent || c.assignedTo || "") === String(agentId)) : clients)
+                  .map((c) => (
+                    <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
+                  ))
               ) : (
                 <option disabled>No clients available</option>
               )}
