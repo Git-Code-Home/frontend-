@@ -17,8 +17,10 @@ export default function AdminCommissions() {
   // form state
   const [agents, setAgents] = useState<User[]>([]);
   const [clients, setClients] = useState<User[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [agentId, setAgentId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
+  const [applicationId, setApplicationId] = useState<string>("");
   const [amount, setAmount] = useState<number | string>("");
   const [createReceipt, setCreateReceipt] = useState<File | null>(null);
 
@@ -27,13 +29,37 @@ export default function AdminCommissions() {
       const token = localStorage.getItem("adminToken");
       // public agents endpoint exists in several places
       const [agentsRes, clientsRes] = await Promise.all([
+        // mounted at /api/public/agents
         api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
+        // returns { clients, applications } under /api/admin/clients
         api.get("/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
-      setAgents(agentsRes.data || []);
-      setClients(clientsRes.data || []);
+
+      // agentsRes.data may be an array or { agents: [...] }
+      if (agentsRes && Array.isArray(agentsRes.data)) {
+        setAgents(agentsRes.data as User[]);
+      } else if (agentsRes && agentsRes.data && Array.isArray(agentsRes.data.agents)) {
+        setAgents(agentsRes.data.agents as User[]);
+      } else {
+        setAgents([]);
+      }
+
+      // clientsRes.data may be { clients, applications } or an array
+      if (!clientsRes || !clientsRes.data) {
+        setClients([]);
+        setApplications([]);
+      } else if (Array.isArray(clientsRes.data)) {
+        setClients(clientsRes.data as User[]);
+        setApplications([]);
+      } else {
+        const cd: any = clientsRes.data;
+        setClients(Array.isArray(cd.clients) ? cd.clients : []);
+        setApplications(Array.isArray(cd.applications) ? cd.applications : []);
+      }
     } catch (e) {
-      // ignore meta errors
+      // Show a user-friendly error and avoid crashing the page
+      console.error("Failed to load agents/clients metadata:", e);
+      alert("Failed to load agents or clients. Please check your network or auth and try again.");
     }
   };
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -65,8 +91,15 @@ export default function AdminCommissions() {
     try {
       const token = localStorage.getItem("adminToken");
       const fd = new FormData();
+      // validate
+      if (!agentId) return alert("Please select an agent");
+      if (!clientId) return alert("Please select a client");
+      if (!applicationId) return alert("Please select an approved application");
+      if (!amount) return alert("Please enter commission amount");
+
       fd.append("agent_id", agentId);
       fd.append("client_id", clientId);
+      fd.append("application_id", applicationId);
       fd.append("commission_amount", String(amount));
       if (createReceipt) fd.append("receipt", createReceipt);
 
@@ -119,18 +152,41 @@ export default function AdminCommissions() {
             <label className="block text-sm font-medium text-gray-700">Agent</label>
             <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className="mt-1 block w-full rounded border p-2">
               <option value="">Select agent</option>
-              {agents.map((a) => (
-                <option key={a._id} value={a._id}>{a.name} ({a.email})</option>
-              ))}
+              {Array.isArray(agents) && agents.length > 0 ? (
+                agents.map((a) => (
+                  <option key={a._id} value={a._id}>{a.name} ({a.email})</option>
+                ))
+              ) : (
+                <option disabled>No agents available</option>
+              )}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Client</label>
             <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="mt-1 block w-full rounded border p-2">
               <option value="">Select client</option>
-              {clients.map((c) => (
-                <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
-              ))}
+              {Array.isArray(clients) && clients.length > 0 ? (
+                clients.map((c) => (
+                  <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
+                ))
+              ) : (
+                <option disabled>No clients available</option>
+              )}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Approved Application</label>
+            <select value={applicationId} onChange={(e) => setApplicationId(e.target.value)} className="mt-1 block w-full rounded border p-2">
+              <option value="">Select application</option>
+              {Array.isArray(applications) && applications.length > 0 ? (
+                applications
+                  .filter((a) => String(a.client?._id || a.client) === String(clientId) && a.applicationStatus === "approved")
+                  .map((a) => (
+                    <option key={a._id} value={a._id}>{a._id} — {a.visaType || a.applicationType || "Application"}</option>
+                  ))
+              ) : (
+                <option disabled>No applications</option>
+              )}
             </select>
           </div>
           <div>
