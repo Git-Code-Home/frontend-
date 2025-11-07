@@ -33,17 +33,10 @@ const Withdrawals: React.FC = () => {
   }, []);
 
   const handleRequestWithdrawal = async (id: string) => {
-    setRequestingId(id);
-    try {
-      await axios.post(`/api/agent/commissions/${id}/withdraw`, {}, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      fetchCommissions();
-      alert("Withdrawal requested.");
-    } catch (err: any) {
-      alert(err.response?.data?.error || "Failed to request withdrawal");
-    }
-    setRequestingId(null);
+    // Withdrawals are intentionally out-of-scope for this project.
+    // Avoid calling any withdraw endpoints that don't exist on the backend.
+    alert("Withdrawals are not enabled in this deployment.");
+    return;
   };
 
   return (
