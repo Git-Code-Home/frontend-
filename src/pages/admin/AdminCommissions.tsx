@@ -19,6 +19,10 @@ export default function AdminCommissions() {
   const [clients, setClients] = useState<User[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [metaError, setMetaError] = useState<string | null>(null);
+  const [clientsLoading, setClientsLoading] = useState(false);
+  const [clientsError, setClientsError] = useState<string | null>(null);
+  const [appsLoading, setAppsLoading] = useState(false);
+  const [appsError, setAppsError] = useState<string | null>(null);
   const [agentId, setAgentId] = useState<string>("");
   const [clientId, setClientId] = useState<string>("");
   const [applicationId, setApplicationId] = useState<string>("");
@@ -95,6 +99,82 @@ export default function AdminCommissions() {
     fetchCommissions();
     fetchMeta();
   }, []);
+
+  // When agent changes, load clients for that agent
+  useEffect(() => {
+    const loadClientsForAgent = async () => {
+      setClientsError(null);
+      setClientsLoading(true);
+      try {
+        const token = localStorage.getItem("adminToken");
+        // Request can include agentId as query param; backend may return all clients, so we filter client-side
+        const res = await api.get(`/admin/clients?agentId=${agentId}`, { headers: { Authorization: `Bearer ${token}` } });
+        let clientList: any[] = [];
+        if (!res || !res.data) {
+          clientList = [];
+        } else if (Array.isArray(res.data)) {
+          clientList = res.data;
+        } else if (res.data.clients && Array.isArray(res.data.clients)) {
+          clientList = res.data.clients;
+        } else {
+          // fallback: if object with clients nested somewhere
+          clientList = [];
+        }
+
+        // Filter by agent assignment if agentId provided
+        if (agentId) {
+          clientList = clientList.filter((c) => String(c.assignedAgent || c.assignedTo || "") === String(agentId));
+        }
+
+        setClients(clientList);
+      } catch (err: any) {
+        console.error("loadClientsForAgent error", err?.message || err);
+        setClientsError("Failed to load clients for selected agent");
+        setClients([]);
+      }
+      setClientsLoading(false);
+    };
+
+    // clear selection when agent changes
+    setClientId("");
+    setApplicationId("");
+    if (agentId) loadClientsForAgent();
+  }, [agentId]);
+
+  // When client changes, load approved applications for that client
+  useEffect(() => {
+    const loadAppsForClient = async () => {
+      setAppsError(null);
+      setAppsLoading(true);
+      try {
+        const token = localStorage.getItem("adminToken");
+        // Backend has /admin/applications; we can pass clientId & status as query params and filter client-side
+        const res = await api.get(`/admin/applications?clientId=${clientId}&status=approved`, { headers: { Authorization: `Bearer ${token}` } });
+        let appList: any[] = [];
+        if (!res || !res.data) {
+          appList = [];
+        } else if (Array.isArray(res.data)) {
+          appList = res.data;
+        } else {
+          // some endpoints may wrap, if so attempt to read .applications
+          appList = Array.isArray(res.data.applications) ? res.data.applications : [];
+        }
+
+        // Filter approved and by client
+        appList = appList.filter((a) => String(a.client?._id || a.client) === String(clientId) && (a.applicationStatus || a.status) === "approved");
+
+        setApplications(appList);
+      } catch (err: any) {
+        console.error("loadAppsForClient error", err?.message || err);
+        setAppsError("Failed to load applications for selected client");
+        setApplications([]);
+      }
+      setAppsLoading(false);
+    };
+
+    setApplicationId("");
+    if (clientId) loadAppsForClient();
+  }, [clientId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,12 +257,14 @@ export default function AdminCommissions() {
             <label className="block text-sm font-medium text-gray-700">Client</label>
             <select value={clientId} onChange={(e) => { setClientId(e.target.value); setApplicationId(""); }} className="mt-1 block w-full rounded border p-2">
               <option value="">Select client</option>
-              {Array.isArray(clients) && clients.length > 0 ? (
-                // if an agent is selected, show only clients assigned to that agent
-                (agentId ? clients.filter((c) => String(c.assignedAgent || c.assignedTo || "") === String(agentId)) : clients)
-                  .map((c) => (
-                    <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
-                  ))
+              {clientsLoading ? (
+                <option disabled>Loading clients...</option>
+              ) : clientsError ? (
+                <option disabled>{clientsError}</option>
+              ) : Array.isArray(clients) && clients.length > 0 ? (
+                clients.map((c) => (
+                  <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
+                ))
               ) : (
                 <option disabled>No clients available</option>
               )}
@@ -192,14 +274,16 @@ export default function AdminCommissions() {
             <label className="block text-sm font-medium text-gray-700">Approved Application</label>
             <select value={applicationId} onChange={(e) => setApplicationId(e.target.value)} className="mt-1 block w-full rounded border p-2">
               <option value="">Select application</option>
-              {Array.isArray(applications) && applications.length > 0 ? (
-                applications
-                  .filter((a) => String(a.client?._id || a.client) === String(clientId) && a.applicationStatus === "approved")
-                  .map((a) => (
-                    <option key={a._id} value={a._id}>{a._id} — {a.visaType || a.applicationType || "Application"}</option>
-                  ))
+              {appsLoading ? (
+                <option disabled>Loading applications...</option>
+              ) : appsError ? (
+                <option disabled>{appsError}</option>
+              ) : Array.isArray(applications) && applications.length > 0 ? (
+                applications.map((a) => (
+                  <option key={a._id} value={a._id}>{a._id} — {a.visaType || a.applicationType || "Application"}</option>
+                ))
               ) : (
-                <option disabled>No applications</option>
+                <option disabled>No approved applications</option>
               )}
             </select>
           </div>
