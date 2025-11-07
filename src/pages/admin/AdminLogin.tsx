@@ -163,13 +163,15 @@ const AdminLogin = () => {
     setLoading(true)
 
     try {
-      // ✅ Updated fetch block
+      // Perform login POST. Do NOT send credentials (cookies) unless the backend
+      // relies on cookie-based auth and CORS is configured for credentials. This
+      // app uses JWTs stored in localStorage, so we avoid credentials to reduce
+      // CORS preflight/response issues.
       const response = await fetch(`${BASE_URL}/api/admin/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // 👈 Important for CORS
         body: JSON.stringify({ email, password }),
       })
 
