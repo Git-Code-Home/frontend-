@@ -123,7 +123,13 @@ export default function AdminCommissions() {
 
         // Filter by agent assignment if agentId provided
         if (agentId) {
-          clientList = clientList.filter((c) => String(c.assignedAgent || c.assignedTo || "") === String(agentId));
+          clientList = clientList.filter((c) => {
+            const a = c.assignedAgent ?? c.assignedTo ?? null;
+            if (!a) return false;
+            // a may be an ObjectId string or a populated object
+            const aid = typeof a === "string" ? a : (a._id ? String(a._id) : String(a));
+            return String(aid) === String(agentId);
+          });
         }
 
         setClients(clientList);
