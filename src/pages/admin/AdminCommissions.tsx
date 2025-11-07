@@ -14,6 +14,28 @@ type Commission = {
 };
 
 export default function AdminCommissions() {
+  // form state
+  const [agents, setAgents] = useState<User[]>([]);
+  const [clients, setClients] = useState<User[]>([]);
+  const [agentId, setAgentId] = useState<string>("");
+  const [clientId, setClientId] = useState<string>("");
+  const [amount, setAmount] = useState<number | string>("");
+  const [createReceipt, setCreateReceipt] = useState<File | null>(null);
+
+  const fetchMeta = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      // public agents endpoint exists in several places
+      const [agentsRes, clientsRes] = await Promise.all([
+        api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
+        api.get("/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      setAgents(agentsRes.data || []);
+      setClients(clientsRes.data || []);
+    } catch (e) {
+      // ignore meta errors
+    }
+  };
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +57,30 @@ export default function AdminCommissions() {
 
   useEffect(() => {
     fetchCommissions();
+    fetchMeta();
   }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("adminToken");
+      const fd = new FormData();
+      fd.append("agent_id", agentId);
+      fd.append("client_id", clientId);
+      fd.append("commission_amount", String(amount));
+      if (createReceipt) fd.append("receipt", createReceipt);
+
+      await api.post("/admin/commissions", fd, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } });
+      setAgentId("");
+      setClientId("");
+      setAmount("");
+      setCreateReceipt(null);
+      await fetchCommissions();
+      alert("Commission created");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Failed to create commission");
+    }
+  };
 
   const handleFileChange = (id: string, f: File | null) => {
     setFileMap((m) => ({ ...m, [id]: f }));
@@ -66,6 +111,41 @@ export default function AdminCommissions() {
       <h1 className="text-2xl font-semibold mb-4">Commissions</h1>
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-600">{error}</p>}
+
+      {/* Create commission form */}
+      <form onSubmit={handleCreate} className="mb-6 bg-white p-4 rounded shadow">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Agent</label>
+            <select value={agentId} onChange={(e) => setAgentId(e.target.value)} className="mt-1 block w-full rounded border p-2">
+              <option value="">Select agent</option>
+              {agents.map((a) => (
+                <option key={a._id} value={a._id}>{a.name} ({a.email})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Client</label>
+            <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="mt-1 block w-full rounded border p-2">
+              <option value="">Select client</option>
+              {clients.map((c) => (
+                <option key={c._id} value={c._id}>{c.name} ({c.email})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Commission Amount</label>
+            <input type="number" value={amount as any} onChange={(e) => setAmount(e.target.value)} className="mt-1 block w-full rounded border p-2" placeholder="0" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Receipt (optional)</label>
+            <input type="file" accept="image/*,application/pdf" onChange={(e) => setCreateReceipt(e.target.files ? e.target.files[0] : null)} className="mt-1 block w-full" />
+          </div>
+        </div>
+        <div className="mt-4">
+          <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded">Create Commission</button>
+        </div>
+      </form>
 
       <div className="overflow-x-auto bg-white rounded shadow">
         <table className="min-w-full divide-y divide-gray-200">

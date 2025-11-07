@@ -275,6 +275,7 @@ import AdminAgents from "./pages/admin/AdminAgents";
 import Agentclients from "./pages/Agents/Agentclients";
 import AgentApplication from "./pages/Agents/AgentApplication";
 import AgentRoute from "./lib/AgentRoute";
+import AgentCommissions from "./pages/Agents/AgentCommissions";
 
 const queryClient = new QueryClient();
 
@@ -314,6 +315,11 @@ const App = () => {
                 <AgentApplication/>
               </AgentRoute>
             }/>
+            <Route path="/agent/commissions" element={
+              <AgentRoute>
+                <AgentCommissions />
+              </AgentRoute>
+            } />
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
