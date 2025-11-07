@@ -5,30 +5,9 @@
 // Read raw value from env (may be undefined in some builds)
 let raw = import.meta.env.VITE_API_BASE_URL || "https://sherry-backend.vercel.app"
 
-// If the env was accidentally left pointing to localhost in a deployed build,
-// try to correct it at runtime: when running in the browser and the resolved
-// raw value points to localhost but the page is not being served from localhost,
-// replace with the production backend host. This is a safety fallback only —
-// the correct fix is to set VITE_API_BASE_URL in your Vercel project and rebuild.
-if (typeof window !== "undefined") {
-	try {
-		const hostname = window.location.hostname
-		// Stronger runtime override: if the app is running on a non-localhost host
-		// (deployed) and the env value contains localhost, replace it with the
-		// production backend. Also log both values for diagnostics.
-		if (hostname && !/localhost|127\.0\.0\.1/.test(hostname)) {
-			if (/localhost|127\.0\.0\.1/.test(raw)) {
-				raw = "https://sherry-backend.vercel.app"
-				console.warn("[BaseUrl] runtime override: replacing localhost env with production backend")
-			}
-			console.info(`[BaseUrl] runtime hostname=${hostname} raw=${raw}`)
-		}
-	} catch (err) {
-		// ignore
-	}
-}
-
 // Normalize: remove any trailing '/api' and any trailing slash so code can append '/api/...'
+// IMPORTANT: Vite env vars are baked at build time. Set VITE_API_BASE_URL in your
+// Vercel project (Production) and rebuild to propagate the correct value.
 const BASE_URL = raw.replace(/\/api\/?$/i, "").replace(/\/$/, "")
 
 export default BASE_URL

@@ -326,47 +326,15 @@ const AdminDashboard = () => {
     }
   }, [navigate])
 
-  // Determine API root at runtime. If the compiled BASE_URL still points to
-  // localhost while the app runs on a deployed host, override to the known
-  // production backend. This is a last-resort fallback until you set the
-  // Vercel environment variable and rebuild.
-  let apiRoot = BASE_URL?.replace(/\/$/, "") || ""
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname
-    if (host && !/localhost|127\.0\.0\.1/.test(host) && /localhost|127\.0\.0\.1/.test(apiRoot)) {
-      console.warn("[AdminDashboard] overriding apiRoot from localhost to production backend for runtime diagnostics")
-      apiRoot = "https://sherry-backend.vercel.app"
-    }
-  }
-
+  // Use the build-time BASE_URL (normalized by `src/lib/BaseUrl.tsx`).
+  // Make sure VITE_API_BASE_URL is set in your production env and the app is rebuilt.
+  const apiRoot = BASE_URL?.replace(/\/$/, "") || ""
   const dashboardUrl = `${apiRoot}/api/admin/clients`
   const { data, error } = useSWR(dashboardUrl, fetcher)
 
-  // Diagnostics to help debug deployment/network issues. This runs only in the browser
-  // and surfaces resolved BASE_URL and quick fetch/axios attempts so you can see
-  // whether the frontend can reach the backend and what errors appear.
-  const [diagnostics, setDiagnostics] = useState<{ baseUrl: string; fetchResult?: string; axiosResult?: string } | null>(null)
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const run = async () => {
-      const base = BASE_URL?.replace(/\/$/, "") || "(not set)"
-      const results: any = { baseUrl: base }
-      try {
-        console.log("[diagnostics] attempting api.get to", dashboardUrl)
-        // use the imported api instance (configured axios)
-        const r = await api.get(dashboardUrl)
-        results.axiosResult = `status:${r.status}`
-        results.fetchResult = `status:${r.status} ok:${r.status >= 200 && r.status < 300}`
-      } catch (err: any) {
-        results.fetchResult = `fetch-error:${err && (err.message || String(err))}`
-        results.axiosResult = `axios-error:${err && (err.message || String(err))}`
-      }
-
-      setDiagnostics(results)
-    }
-    run()
-  }, [dashboardUrl])
+  // No runtime diagnostics here. Rely on build-time env (VITE_API_BASE_URL) and
+  // server-side CORS configuration. If you still see incorrect requests in
+  // the deployed app, trigger a rebuild in Vercel after setting the env var.
 
   const clients = Array.isArray(data?.clients) ? data.clients : []
   const applications = Array.isArray(data?.applications) ? data.applications : []
@@ -487,14 +455,7 @@ const AdminDashboard = () => {
           {error ? (
             <p className="text-destructive mt-2 text-sm">Failed to load data: {String((error as any)?.message || error)}</p>
           ) : null}
-          {diagnostics ? (
-            <div className="mt-3 text-sm bg-muted/10 p-3 rounded">
-              <div className="font-medium">Connection diagnostics</div>
-              <div className="mt-1">BASE_URL: <span className="font-mono">{diagnostics.baseUrl}</span></div>
-              <div>Fetch: <span className="font-mono">{diagnostics.fetchResult}</span></div>
-              <div>Axios: <span className="font-mono">{diagnostics.axiosResult}</span></div>
-            </div>
-          ) : null}
+          {/* No runtime diagnostics displayed in production build */}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
