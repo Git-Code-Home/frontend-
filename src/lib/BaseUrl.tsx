@@ -3,7 +3,7 @@
 // Vite exposes env variables prefixed with VITE_ via import.meta.env
 // Ensure you set VITE_API_BASE_URL in your .env.development and .env.production
 // Read raw value from env (may be undefined in some builds)
-let raw = import.meta.env.VITE_API_BASE_URL || "https://visa-management-backend.vercel.app"
+let raw = import.meta.env.VITE_API_BASE_URL || "https://sherry-backend.vercel.app"
 
 // If the env was accidentally left pointing to localhost in a deployed build,
 // try to correct it at runtime: when running in the browser and the resolved
@@ -18,7 +18,7 @@ if (typeof window !== "undefined") {
 		// production backend. Also log both values for diagnostics.
 		if (hostname && !/localhost|127\.0\.0\.1/.test(hostname)) {
 			if (/localhost|127\.0\.0\.1/.test(raw)) {
-				raw = "https://visa-management-backend.vercel.app"
+				raw = "https://sherry-backend.vercel.app"
 				console.warn("[BaseUrl] runtime override: replacing localhost env with production backend")
 			}
 			console.info(`[BaseUrl] runtime hostname=${hostname} raw=${raw}`)

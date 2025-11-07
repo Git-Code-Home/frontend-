@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface User {
   _id: string;
@@ -39,7 +39,7 @@ const AdminCommissions: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/admin/commissions", {
+      const res = await api.get("/admin/commissions", {
         headers: { Authorization: `Bearer ${localStorage.getItem("adminToken")}` },
       });
       setCommissions(res.data);
@@ -53,8 +53,8 @@ const AdminCommissions: React.FC = () => {
     try {
       const token = localStorage.getItem("adminToken");
       const [agentsRes, clientsRes] = await Promise.all([
-        axios.get("/api/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get("/api/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
+  api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } }),
+  api.get("/admin/clients", { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       setAgents(agentsRes.data || []);
@@ -85,7 +85,7 @@ const AdminCommissions: React.FC = () => {
     formData.append("paymentProof", paymentProof);
 
     try {
-      await axios.put(`/api/admin/commissions/${commissionId}/receipt`, formData, {
+      await api.put(`/admin/commissions/${commissionId}/receipt`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("adminToken")}`,
@@ -111,7 +111,7 @@ const AdminCommissions: React.FC = () => {
       form.append("commission_amount", String(formAmount));
       if (formReceipt) form.append("receipt", formReceipt);
 
-      await axios.post("/api/admin/commissions", form, {
+      await api.post("/admin/commissions", form, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",

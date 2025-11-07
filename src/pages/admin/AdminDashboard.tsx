@@ -268,7 +268,7 @@ import { Users, FileText, Clock, DollarSign, TrendingUp, AlertTriangle, CheckCir
 import useSWR from "swr"
 import BASE_URL from "@/lib/BaseUrl"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
+import api from "@/lib/api"
 
 const fetcher = async (url: string) => {
   // debug: log URL so you can confirm exactly what is being requested
@@ -335,7 +335,7 @@ const AdminDashboard = () => {
     const host = window.location.hostname
     if (host && !/localhost|127\.0\.0\.1/.test(host) && /localhost|127\.0\.0\.1/.test(apiRoot)) {
       console.warn("[AdminDashboard] overriding apiRoot from localhost to production backend for runtime diagnostics")
-      apiRoot = "https://visa-management-backend.vercel.app"
+      apiRoot = "https://sherry-backend.vercel.app"
     }
   }
 
@@ -353,9 +353,9 @@ const AdminDashboard = () => {
       const base = BASE_URL?.replace(/\/$/, "") || "(not set)"
       const results: any = { baseUrl: base }
       try {
-        console.log("[diagnostics] attempting axios.get to", dashboardUrl)
-        // use the imported axios instance directly (api was not defined)
-        const r = await axios.get(dashboardUrl)
+        console.log("[diagnostics] attempting api.get to", dashboardUrl)
+        // use the imported api instance (configured axios)
+        const r = await api.get(dashboardUrl)
         results.axiosResult = `status:${r.status}`
         results.fetchResult = `status:${r.status} ok:${r.status >= 200 && r.status < 300}`
       } catch (err: any) {

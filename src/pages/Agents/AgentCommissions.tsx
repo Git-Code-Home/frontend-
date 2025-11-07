@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/api";
 
 interface User {
   _id: string;
@@ -26,13 +26,13 @@ const AgentCommissions: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get("/api/agent/commissions", {
+      const res = await api.get("/agent/commissions", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setCommissions(res.data);
       // fetch summary
       try {
-        const s = await axios.get("/api/agent/commissions/summary", {
+        const s = await api.get("/agent/commissions/summary", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         setSummary(s.data);
