@@ -225,6 +225,17 @@ export async function getAgentNotifications() {
 }
 
 // --------------------------------------------------
+// Commissions helpers (agent)
+// --------------------------------------------------
+export async function getAgentCommissionsList(): Promise<any[]> {
+  return apiFetch<any[]>(`/commissions`, { method: "GET" })
+}
+
+export async function getAgentCommissionsSummary(): Promise<any> {
+  return apiFetch<any>(`/commission`, { method: "GET" })
+}
+
+// --------------------------------------------------
 // ✅ Application helpers
 // --------------------------------------------------
 

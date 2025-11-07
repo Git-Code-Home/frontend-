@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import api from "@/lib/api";
 import BASE_URL from "@/lib/BaseUrl";
 import { useToast } from "@/hooks/use-toast";
+import { getAgentCommissionsList, getAgentCommissionsSummary } from "@/lib/agent";
 
 type User = { _id: string; name: string; email: string };
 
@@ -25,18 +25,18 @@ const AgentCommissions: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token");
-      const res = await api.get("/agent/commissions", { headers: { Authorization: `Bearer ${token}` } });
-      setCommissions(res.data || []);
+      const list = await getAgentCommissionsList();
+      setCommissions(list || []);
       try {
-        const s = await api.get("/agent/commissions/summary", { headers: { Authorization: `Bearer ${token}` } });
-        setSummary(s.data || null);
+        const s = await getAgentCommissionsSummary();
+        setSummary(s || null);
       } catch (e) {
-        // ignore
+        // ignore summary failure
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch commissions");
-      toast({ title: "Failed to load commissions", description: err.response?.data?.message || "Could not fetch commissions", variant: "destructive" })
+      const msg = err?.message || err?.response?.data?.message || "Failed to fetch commissions";
+      setError(msg);
+      toast({ title: "Failed to load commissions", description: msg, variant: "destructive" });
     }
     setLoading(false);
   };
