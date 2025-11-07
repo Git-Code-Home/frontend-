@@ -21,8 +21,12 @@ import {
   type Client,
   getMyClients,
   createOrUpdateApplication,
+  getApplicationById,
+  approveApplication,
+  rejectApplication,
 } from "@/lib/agent"
 import BASE_URL from "@/lib/BaseUrl"
+import { useToast } from "@/hooks/use-toast"
 
 interface ApplicationDetails extends Omit<Application, 'client'> {
   documents?: {
@@ -86,6 +90,7 @@ const AgentApplication = () => {
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedApplication, setSelectedApplication] = useState<ApplicationDetails | null>(null)
   const [detailsLoading, setDetailsLoading] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const load = async () => {
@@ -110,28 +115,49 @@ const AgentApplication = () => {
     } catch {}
   }
 
- const fetchApplicationDetails = async (applicationId: string) => {
+const fetchApplicationDetails = async (applicationId: string) => {
   try {
     setDetailsLoading(true)
-    const response = await fetch(`${BASE_URL}/admin/public/data?type=applications&id=${applicationId}`)
-    if (!response.ok) throw new Error('Failed to fetch application details')
-    const data = await response.json()
-    
-    // The API returns an array of applications, we need to find the specific one
-    const applications = data.applications || []
-    const applicationDetails = applications.find((app: any) => app._id === applicationId)
-    
-    if (applicationDetails) {
-      setSelectedApplication(applicationDetails)
-      setDetailsOpen(true)
-    } else {
-      throw new Error('Application not found')
-    }
-  } catch (error) {
-    console.error('Error fetching application details:', error)
-    setError('Failed to load application details')
+    const app = await getApplicationById(applicationId)
+    setSelectedApplication(app as ApplicationDetails)
+    setDetailsOpen(true)
+  } catch (err: any) {
+    console.error("Error fetching application details:", err)
+    setError(err?.message || "Failed to load application details")
+    toast({ title: "Failed to load", description: err?.message || "Unable to load application details", variant: "destructive" })
   } finally {
     setDetailsLoading(false)
+  }
+}
+
+const buildFileUrl = (path?: string) => {
+  if (!path) return undefined
+  if (path.startsWith("http://") || path.startsWith("https://")) return path
+  return `${BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`
+}
+
+const handleApprove = async (appId: string) => {
+  try {
+    const updated = await approveApplication(appId)
+    toast({ title: "Application Approved", description: "Application marked as approved." })
+    // refresh list and detail view
+    await refresh()
+    setSelectedApplication(updated as ApplicationDetails)
+  } catch (err: any) {
+    console.error("approve failed", err)
+    toast({ title: "Approve Failed", description: err?.message || "Could not approve application", variant: "destructive" })
+  }
+}
+
+const handleReject = async (appId: string) => {
+  try {
+    const updated = await rejectApplication(appId)
+    toast({ title: "Application Rejected", description: "Application marked as rejected." })
+    await refresh()
+    setSelectedApplication(updated as ApplicationDetails)
+  } catch (err: any) {
+    console.error("reject failed", err)
+    toast({ title: "Reject Failed", description: err?.message || "Could not reject application", variant: "destructive" })
   }
 }
 
@@ -288,21 +314,23 @@ const AgentApplication = () => {
       setUploading(true)
       
       // Create FormData with all required fields
-      const formData = new FormData()
-      
-      // Append documents
-      if (passportFile) formData.append("passport", passportFile)
-      if (photoFile) formData.append("photo", photoFile)
-      if (idCardFile) formData.append("idCard", idCardFile)
-      
-      // Append required identifiers and visa data
-      formData.append("applicationId", editing._id)
-      formData.append("clientId", editing.client?._id || editing.clientId)
-      formData.append("visaType", visaType || editing.visaType || "")
-      
-      // Append dates if available
-      if (issueDate) formData.append("issueDate", issueDate)
-      if (expiryDate) formData.append("expiryDate", expiryDate)
+            const formData = new FormData()
+            
+            // Append documents
+            if (passportFile) formData.append("passport", passportFile)
+            if (photoFile) formData.append("photo", photoFile)
+            if (idCardFile) formData.append("idCard", idCardFile)
+            
+            // Append required identifiers and visa data
+            formData.append("applicationId", editing._id)
+            // Prefer client id from the linked client object; fall back to selectedClientId if available
+            const clientIdToAppend = editing.client?._id ?? selectedClientId
+            if (clientIdToAppend) formData.append("clientId", clientIdToAppend)
+            formData.append("visaType", visaType || editing.visaType || "")
+            
+            // Append dates if available
+            if (issueDate) formData.append("issueDate", issueDate)
+            if (expiryDate) formData.append("expiryDate", expiryDate)
 
       await createOrUpdateApplication(formData)
       setOpen(false)
@@ -575,11 +603,11 @@ const AgentApplication = () => {
                                 <FileText className="mr-2 h-4 w-4" />
                                 Request Documents
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => changeStatus(application, "approved")}>
+                              <DropdownMenuItem onClick={() => handleApprove(application._id)}>
                                 <CheckCircle className="mr-2 h-4 w-4" />
                                 Mark Approved
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => changeStatus(application, "rejected")}>
+                              <DropdownMenuItem onClick={() => handleReject(application._id)}>
                                 <XCircle className="mr-2 h-4 w-4" />
                                 Mark Rejected
                               </DropdownMenuItem>

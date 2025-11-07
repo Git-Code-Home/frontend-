@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useToast } from "@/hooks/use-toast";
 
 interface Commission {
   _id: string;
@@ -32,10 +33,12 @@ const Withdrawals: React.FC = () => {
     fetchCommissions();
   }, []);
 
+  const { toast } = useToast();
+
   const handleRequestWithdrawal = async (id: string) => {
     // Withdrawals are intentionally out-of-scope for this project.
     // Avoid calling any withdraw endpoints that don't exist on the backend.
-    alert("Withdrawals are not enabled in this deployment.");
+    toast({ title: "Withdrawals disabled", description: "Withdrawals are not enabled in this deployment.", variant: "destructive" })
     return;
   };
 

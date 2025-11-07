@@ -248,6 +248,18 @@ export async function updateApplicationDetails(
   })
 }
 
+export async function getApplicationById(applicationId: string): Promise<Application> {
+  return apiFetch<Application>(`/applications/${applicationId}`, { method: "GET" })
+}
+
+export async function approveApplication(applicationId: string) {
+  return apiFetch<Application>(`/applications/${applicationId}/approve`, { method: "PATCH" })
+}
+
+export async function rejectApplication(applicationId: string) {
+  return apiFetch<Application>(`/applications/${applicationId}/reject`, { method: "PATCH" })
+}
+
 
 
 

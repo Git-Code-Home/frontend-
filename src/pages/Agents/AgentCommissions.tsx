@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "@/lib/api";
+import BASE_URL from "@/lib/BaseUrl";
+import { useToast } from "@/hooks/use-toast";
 
 type User = { _id: string; name: string; email: string };
 
@@ -17,6 +19,7 @@ const AgentCommissions: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ total: number; paid: number; pending: number } | null>(null);
+  const { toast } = useToast();
 
   const fetchCommissions = async () => {
     setLoading(true);
@@ -33,6 +36,7 @@ const AgentCommissions: React.FC = () => {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to fetch commissions");
+      toast({ title: "Failed to load commissions", description: err.response?.data?.message || "Could not fetch commissions", variant: "destructive" })
     }
     setLoading(false);
   };
@@ -40,6 +44,12 @@ const AgentCommissions: React.FC = () => {
   useEffect(() => {
     fetchCommissions();
   }, []);
+
+  const buildReceiptUrl = (path?: string) => {
+    if (!path) return undefined;
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    return `${BASE_URL.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+  };
 
   return (
     <div className="p-6">
@@ -90,7 +100,14 @@ const AgentCommissions: React.FC = () => {
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {commission.paymentProof ? (
-                    <a className="text-sky-600 underline" href={commission.paymentProof.startsWith("http") ? commission.paymentProof : `/${commission.paymentProof}`} target="_blank" rel="noreferrer">View</a>
+                    <a
+                      className="text-sky-600 underline"
+                      href={buildReceiptUrl(commission.paymentProof)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View
+                    </a>
                   ) : (
                     <span className="text-gray-500">Pending Payment</span>
                   )}
