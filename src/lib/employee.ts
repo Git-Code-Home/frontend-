@@ -68,6 +68,30 @@ export async function getMyApplications() {
   return res.json()
 }
 
+export async function getCountries() {
+  const res = await fetch(`${BASE_URL}/api/countries`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.message || "Failed to fetch countries")
+  }
+  return res.json()
+}
+
+export async function getTemplateByCountry(countrySlug: string) {
+  const res = await fetch(`${BASE_URL}/api/templates/${encodeURIComponent(countrySlug)}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err?.message || `Failed to fetch template for ${countrySlug}`)
+  }
+  return res.json()
+}
+
 export async function createApplication(input: CreateApplicationInput) {
   const token = getToken()
   if (!token) throw new Error("Not authenticated")
@@ -82,6 +106,9 @@ export async function createApplication(input: CreateApplicationInput) {
       clientId: input.clientId,
       visaType: input.visaType,
       visaDuration: input.visaDuration,
+      // allow optional country and formData to be passed for dynamic templates
+      country: (input as any).country ?? undefined,
+      formData: (input as any).formData ?? undefined,
     }),
   })
 

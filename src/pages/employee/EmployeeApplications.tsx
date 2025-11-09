@@ -31,6 +31,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { createApplication, uploadApplicationDocuments, getMyClients, getMyApplications } from "@/lib/employee"
+import { getCountries, getTemplateByCountry } from "@/lib/employee"
+import FieldRenderer from "@/components/FieldRenderer"
 
 interface Application {
   _id: string
@@ -80,6 +82,12 @@ const EmployeeApplications = () => {
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  // Dynamic template state
+  const [countries, setCountries] = useState<Array<{ name: string; slug: string }>>([])
+  const [selectedCountry, setSelectedCountry] = useState<string>("dubai")
+  const [template, setTemplate] = useState<any | null>(null)
+  const [formData, setFormData] = useState<Record<string, any>>({})
+
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null)
   const [openDetails, setOpenDetails] = useState(false)
 
@@ -93,11 +101,17 @@ const EmployeeApplications = () => {
     const fetchData = async () => {
       try {
         console.log("[v0] Fetching clients and applications from API...")
-        const [clientsData, applicationsData] = await Promise.all([getMyClients(), getMyApplications()])
+        const [clientsData, applicationsData, countriesData] = await Promise.all([
+          getMyClients(),
+          getMyApplications(),
+          getCountries(),
+        ])
         console.log("[v0] Clients fetched:", clientsData)
         console.log("[v0] Applications fetched:", applicationsData)
+        console.log("[v0] Countries fetched:", countriesData)
         setClients(clientsData)
         setApplications(applicationsData)
+        setCountries(countriesData || [])
       } catch (error) {
         console.error("[v0] Error fetching data:", error)
         toast({ title: "Error", description: "Failed to fetch data", variant: "destructive" })
@@ -107,7 +121,45 @@ const EmployeeApplications = () => {
     }
 
     fetchData()
+
+    // load template for default selected country
+    const loadDefaultTemplate = async () => {
+      try {
+        if (selectedCountry) {
+          const t = await getTemplateByCountry(selectedCountry)
+          setTemplate(t)
+          setFormData({})
+        }
+      } catch (err) {
+        console.warn("No template for country or failed to load:", err)
+      }
+    }
+
+    loadDefaultTemplate()
   }, [toast])
+
+  // when selectedCountry changes, fetch template
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        if (!selectedCountry) return
+        const t = await getTemplateByCountry(selectedCountry)
+        if (mounted) {
+          setTemplate(t)
+          setFormData({})
+        }
+      } catch (err) {
+        if (mounted) {
+          setTemplate(null)
+        }
+      }
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [selectedCountry])
 
   async function handleCreateApplication(e: React.FormEvent) {
     e.preventDefault()
@@ -117,9 +169,14 @@ const EmployeeApplications = () => {
         toast({ title: "Missing fields", description: "Client and Visa Type are required.", variant: "destructive" })
         return
       }
-
-      console.log("[v0] Creating application with clientId:", clientId, "visaType:", visaTypeCreate)
-      const { applicationId } = await createApplication({ clientId, visaType: visaTypeCreate, visaDuration })
+      console.log("[v0] Creating application with clientId:", clientId, "visaType:", visaTypeCreate, "country:", selectedCountry)
+      const { applicationId } = await createApplication({
+        clientId,
+        visaType: visaTypeCreate,
+        visaDuration,
+        country: selectedCountry,
+        formData,
+      } as any)
       console.log("[v0] Application created with ID:", applicationId)
 
       if (applicationId && (passportFile || photoFile || idCardFile || birthCertificateFile || bFormFile || 
@@ -144,9 +201,12 @@ const EmployeeApplications = () => {
       const applicationsData = await getMyApplications()
       setApplications(applicationsData)
 
-      setClientId("")
-      setVisaTypeCreate("")
-      setVisaDuration("")
+  setClientId("")
+  setVisaTypeCreate("")
+  setVisaDuration("")
+  setSelectedCountry("dubai")
+  setTemplate(null)
+  setFormData({})
       setPassportFile(null)
       setPhotoFile(null)
       setIdCardFile(null)
@@ -412,6 +472,26 @@ const EmployeeApplications = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select value={selectedCountry} onValueChange={(v) => setSelectedCountry(v)}>
+                      <SelectTrigger id="country" className="rounded-2xl">
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {countries.length === 0 ? (
+                          <SelectItem value="dubai">Dubai</SelectItem>
+                        ) : (
+                          countries.map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>
+                              {c.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="visaType">Visa Type</Label>
                     <Select value={visaTypeCreate} onValueChange={setVisaTypeCreate}>
@@ -719,6 +799,7 @@ const EmployeeApplications = () => {
               </DialogTitle>
             </DialogHeader>
             {selectedApplication && (
+              <>
               <div className="space-y-6">
                 {/* Application Info */}
                 <div className="space-y-4">
@@ -857,6 +938,21 @@ const EmployeeApplications = () => {
                   </Button>
                 </div>
               </div>
+
+              {/* Dynamic template fields (rendered when template is available) */}
+              {template?.fields && (
+                <div className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Additional Details for {template.title || selectedCountry}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <FieldRenderer fields={template.fields} formData={formData} setFormData={setFormData} />
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+              </>
             )}
           </DialogContent>
         </Dialog>
