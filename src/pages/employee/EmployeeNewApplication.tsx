@@ -2091,6 +2091,7 @@ const EmployeeApplications = () => {
   const [birthCertificateFile, setBirthCertificateFile] = useState<File | null>(null)
   const [bayFormFile, setBayFormFile] = useState<File | null>(null)
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
+  const [filledTemplateFile, setFilledTemplateFile] = useState<File | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
 
@@ -2271,6 +2272,7 @@ const EmployeeApplications = () => {
       if (birthCertificateFile) form.append("birthCertificate", birthCertificateFile)
       if (bayFormFile) form.append("bForm", bayFormFile)
       if (paymentReceiptFile) form.append("paymentReceipt", paymentReceiptFile)
+  if (filledTemplateFile) form.append("filledTemplate", filledTemplateFile)
 
       // include dynamic docs under their raw names (backend will accept known fields)
       Object.entries(dynamicDocs).forEach(([key, file]) => {
@@ -2301,6 +2303,7 @@ const EmployeeApplications = () => {
       setBirthCertificateFile(null)
       setBayFormFile(null)
       setPaymentReceiptFile(null)
+  setFilledTemplateFile(null)
       setOpenCreate(false)
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to create application", variant: "destructive" })
@@ -2562,6 +2565,16 @@ const EmployeeApplications = () => {
                       <CardContent>
                         <FieldRenderer fields={template.fields} formData={formDataDynamic} setFormData={setFormDataDynamic} />
 
+                        {/* Template PDF download + filled-template upload */}
+                        {template?.formPdfUrl && (
+                          <div className="mb-3">
+                            <Label className="text-slate-700 font-medium">Download Template</Label>
+                            <a href={template.formPdfUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                              Download blank {template.title || selectedCountry} form
+                            </a>
+                          </div>
+                        )}
+
                         {/* requiredDocs inputs */}
                         {Array.isArray(template.requiredDocs) && template.requiredDocs.length > 0 && (
                           <div className="mt-4">
@@ -2596,6 +2609,10 @@ const EmployeeApplications = () => {
                       accept="image/*,application/pdf"
                       onChange={(e) => setPassportFile(e.target.files?.[0] || null)}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="filledTemplate">Filled Template (PDF)</Label>
+                    <Input id="filledTemplate" type="file" accept="application/pdf" onChange={(e) => setFilledTemplateFile(e.target.files?.[0] || null)} />
                   </div>
 
                   <div className="space-y-2">
