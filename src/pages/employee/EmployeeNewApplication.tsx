@@ -2096,8 +2096,10 @@ const EmployeeApplications = () => {
   const [submitting, setSubmitting] = useState(false)
 
   // Dynamic template state
-  const [countries, setCountries] = useState<Array<{ name: string; slug: string }>>([])
+  type Country = { name: string; slug: string; active?: boolean; region?: string }
+  const [countries, setCountries] = useState<Country[]>([])
   const [selectedCountry, setSelectedCountry] = useState<string>("dubai")
+  const [selectedSchengenMember, setSelectedSchengenMember] = useState<string>("")
   const [template, setTemplate] = useState<any | null>(null)
   const [formDataDynamic, setFormDataDynamic] = useState<Record<string, any>>({})
   const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
@@ -2202,13 +2204,18 @@ const EmployeeApplications = () => {
         // load countries for dynamic templates
         try {
           const cs = await getCountries()
-            // only keep active countries
-            const active = (cs || []).filter((c: any) => c.active !== false)
-            setCountries(active || [])
-            // if seeded, ensure selectedCountry exists
-            if (active && active.length && !active.find((c: any) => c.slug === selectedCountry)) {
-              setSelectedCountry(active[0].slug)
-            }
+          // only keep active countries
+          const active = (cs || []).filter((c: any) => c.active !== false)
+          setCountries(active || [])
+          // if seeded, ensure selectedCountry exists
+          if (active && active.length && !active.find((c: any) => c.slug === selectedCountry)) {
+            setSelectedCountry(active[0].slug)
+          }
+          // if the top-level is schengen, preselect first member
+          if (active && active.length && active[0].slug === "schengen") {
+            const members = active.filter((c: any) => c.region === "schengen" && c.slug !== "schengen")
+            if (members.length) setSelectedSchengenMember(members[0].slug)
+          }
         } catch (err) {
           console.warn("Failed to load countries:", err)
         }
@@ -2228,7 +2235,9 @@ const EmployeeApplications = () => {
       try {
         if (!selectedCountry) return
         setTemplateLoading(true)
-        const t = await getTemplateByCountry(selectedCountry)
+        // If top-level Schengen chosen, always fetch the shared Schengen template
+        const templateSlugToFetch = selectedCountry === "schengen" ? "schengen" : selectedCountry
+        const t = await getTemplateByCountry(templateSlugToFetch)
         if (mounted) {
           setTemplate(t)
           setFormDataDynamic({})
@@ -2255,10 +2264,11 @@ const EmployeeApplications = () => {
         return
       }
       // include dynamic country and formData in payload
+      const effectiveCountry = selectedCountry === "schengen" && selectedSchengenMember ? selectedSchengenMember : selectedCountry
       const { applicationId } = await createApplication({
         clientId,
         visaType: visaTypeCreate,
-        country: selectedCountry,
+        country: effectiveCountry,
         formData: formDataDynamic,
       } as any)
 
@@ -2537,6 +2547,26 @@ const EmployeeApplications = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {selectedCountry === "schengen" && (
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-medium">Schengen Member Country</Label>
+                    <Select value={selectedSchengenMember} onValueChange={(v) => setSelectedSchengenMember(v)}>
+                      <SelectTrigger className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                        <SelectValue placeholder="Select Schengen country" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {countries
+                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
+                          .map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="visaType">Visa Type</Label>

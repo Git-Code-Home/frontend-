@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileText, Upload, Send } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import FieldRenderer from "@/components/FieldRenderer"
 import { getCountries, getTemplateByCountry } from "@/lib/employee"
 import BASE_URL from "@/lib/BaseUrl"
@@ -13,8 +14,10 @@ import { useToast } from "@/hooks/use-toast"
 
 const ClientNewApplication = () => {
   const { toast } = useToast()
-  const [countries, setCountries] = useState<Array<{ name: string; slug: string }>>([])
+  const navigate = useNavigate()
+  const [countries, setCountries] = useState<Array<{ name: string; slug: string; region?: string; active?: boolean }>>([])
   const [selectedCountry, setSelectedCountry] = useState<string>("dubai")
+  const [selectedSchengenMember, setSelectedSchengenMember] = useState<string>("")
   const [template, setTemplate] = useState<any | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [visaType, setVisaType] = useState<string>("")
@@ -34,6 +37,11 @@ const ClientNewApplication = () => {
         setCountries(active)
         if (active && active.length) {
           setSelectedCountry(active[0].slug)
+          // if the first active is Schengen, preselect first member (optional)
+          const schengenMembers = active.filter((c: any) => c.region === "schengen" && c.slug !== "schengen")
+          if (active[0].slug === "schengen" && schengenMembers.length) {
+            setSelectedSchengenMember(schengenMembers[0].slug)
+          }
         }
       } catch (err) {
         console.warn("Failed to load countries:", err)
@@ -47,7 +55,9 @@ const ClientNewApplication = () => {
     const loadTemplate = async () => {
       try {
         if (!selectedCountry) return
-        const t = await getTemplateByCountry(selectedCountry)
+        // If top-level Schengen selected, fetch the Schengen template (shared template)
+        const templateSlugToFetch = selectedCountry === "schengen" ? "schengen" : selectedCountry
+        const t = await getTemplateByCountry(templateSlugToFetch)
         if (mounted) setTemplate(t)
       } catch (err) {
         if (mounted) setTemplate(null)
@@ -64,7 +74,9 @@ const ClientNewApplication = () => {
 
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
-      const payload: any = { country: selectedCountry, formData, visaType, visaDuration }
+  // If Schengen is selected and a member is chosen, use the member slug as the application's country
+  const effectiveCountry = selectedCountry === "schengen" && selectedSchengenMember ? selectedSchengenMember : selectedCountry
+  const payload: any = { country: effectiveCountry, formData, visaType, visaDuration }
 
       // Create the application first
       const res = await fetch(`${BASE_URL}/api/client/applications`, {
@@ -166,6 +178,27 @@ const ClientNewApplication = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* When Schengen is chosen, show member country dropdown */}
+                {selectedCountry === "schengen" && (
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-medium">Schengen Member Country</Label>
+                    <Select value={selectedSchengenMember} onValueChange={(v) => setSelectedSchengenMember(v)}>
+                      <SelectTrigger className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                        <SelectValue placeholder="Select Schengen country" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl">
+                        {countries
+                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
+                          .map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">Visa Type</Label>
@@ -288,15 +321,14 @@ const ClientNewApplication = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={async () => {
-                    // navigate to upload documents page
+                  onClick={() => {
+                    // navigate to upload documents page using SPA navigation
                     const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
                     if (!token) {
                       toast({ title: "Not logged in", description: "Please login to upload documents", variant: "destructive" })
                       return
                     }
-                    // go to documents page
-                    window.location.href = "/client/documents"
+                    navigate("/client/documents")
                   }}
                   className="rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 px-6 bg-transparent"
                 >
