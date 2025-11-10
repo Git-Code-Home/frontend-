@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Clock, CheckCircle, Calendar, Plus, Download, AlertTriangle } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import BASE_URL from "@/lib/BaseUrl"
 
 const ClientDashboard = () => {
   const myStats = [
@@ -12,36 +14,37 @@ const ClientDashboard = () => {
     { title: "Pending", value: "1", icon: Clock, color: "text-amber-600" },
     { title: "Expiring Soon", value: "0", icon: AlertTriangle, color: "text-red-600" },
   ]
+  const [applications, setApplications] = useState<any[]>([])
+  const [loadingApps, setLoadingApps] = useState<boolean>(true)
 
-  const myApplications = [
-    {
-      id: "VA025",
-      type: "Tourist Visa",
-      status: "Approved",
-      submitDate: "2024-01-10",
-      issueDate: "2024-01-15",
-      expiryDate: "2024-07-15",
-      validityDays: 181,
-    },
-    {
-      id: "VA026",
-      type: "Business Visa",
-      status: "Under Review",
-      submitDate: "2024-01-14",
-      issueDate: null,
-      expiryDate: null,
-      validityDays: null,
-    },
-    {
-      id: "VA027",
-      type: "Transit Visa",
-      status: "Documents Required",
-      submitDate: "2024-01-16",
-      issueDate: null,
-      expiryDate: null,
-      validityDays: null,
-    },
-  ]
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoadingApps(true)
+        const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
+        const res = await fetch(`${BASE_URL}/api/client/applications`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        })
+        if (!res.ok) {
+          console.warn("Failed to fetch client applications", res.status)
+          setApplications([])
+          return
+        }
+        const data = await res.json()
+        setApplications(data || [])
+      } catch (err) {
+        console.error("Error loading applications:", err)
+        setApplications([])
+      } finally {
+        setLoadingApps(false)
+      }
+    }
+    load()
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,6 +68,16 @@ const ClientDashboard = () => {
   }
 
   const navigate = useNavigate()
+
+  const formatDate = (d: string | null | undefined) => {
+    if (!d) return "-"
+    try {
+      const dt = new Date(d)
+      return dt.toLocaleDateString()
+    } catch (err) {
+      return String(d)
+    }
+  }
 
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
@@ -190,64 +203,69 @@ const ClientDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {myApplications.map((app) => (
-                <div
-                  key={app.id}
-                  className="p-4 sm:p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all duration-200"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <div className="font-medium text-slate-900">{app.type}</div>
-                        <div className="text-sm text-slate-600">
-                          Application {app.id} • Submitted {app.submitDate}
+              {loadingApps ? (
+                <div>Loading applications...</div>
+              ) : (
+                applications.map((app) => (
+                  <div
+                    key={app._id}
+                    className="p-4 sm:p-6 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all duration-200"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 space-y-2 sm:space-y-0">
+                      <div className="flex items-center space-x-3">
+                        <div>
+                          <div className="font-medium text-slate-900">{app.visaType}</div>
+                          <div className="text-sm text-slate-600">Application {String(app._id).slice(-6)} • Submitted {formatDate(app.submitDate)}</div>
                         </div>
                       </div>
+                      <Badge className={`${getStatusColor(app.applicationStatus)} rounded-full px-3 py-1 border`}>{app.applicationStatus}</Badge>
                     </div>
-                    <Badge className={`${getStatusColor(app.status)} rounded-full px-3 py-1 border`}>
-                      {app.status}
-                    </Badge>
-                  </div>
 
-                  {app.status === "Approved" && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-                      <div className="text-center">
-                        <div className="text-sm text-emerald-600">Issue Date</div>
-                        <div className="font-medium text-emerald-900">{app.issueDate}</div>
+                    {app.applicationStatus === "approved" && (
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3 p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
+                        <div className="text-center">
+                          <div className="text-sm text-emerald-600">Issue Date</div>
+                          <div className="font-medium text-emerald-900">{formatDate(app.issueDate)}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-emerald-600">Expiry Date</div>
+                          <div className="font-medium text-emerald-900">{formatDate(app.expiryDate)}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm text-emerald-600">Validity</div>
+                          <div className="font-medium text-emerald-900">-</div>
+                        </div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-sm text-emerald-600">Expiry Date</div>
-                        <div className="font-medium text-emerald-900">{app.expiryDate}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-sm text-emerald-600">Validity</div>
-                        <div className="font-medium text-emerald-900">{app.validityDays} days</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row justify-end mt-3 space-y-2 sm:space-y-0 sm:space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/client/applications/${app.id}`)}
-                      className="rounded-2xl border-slate-200 hover:bg-slate-50 bg-transparent"
-                    >
-                      View Details
-                    </Button>
-                    {app.status === "Approved" && (
-                      <Button
-                        size="sm"
-                        onClick={() => (window.location.href = `/client/applications/${app.id}/download`)}
-                        className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                      >
-                        <Download className="mr-1 h-3 w-3" />
-                        Download
-                      </Button>
                     )}
+
+                    <div className="flex flex-col sm:flex-row justify-end mt-3 space-y-2 sm:space-y-0 sm:space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/client/applications/${app._id}`)}
+                        className="rounded-2xl border-slate-200 hover:bg-slate-50 bg-transparent"
+                      >
+                        View Details
+                      </Button>
+                      {/* Download uses the first available document (prefer filledTemplate) */}
+                      {(() => {
+                        const docs = app.documents || {}
+                        const url = docs.filledTemplate || docs.paymentReceipt || docs.passport || docs.photo || Object.values(docs || {})[0]
+                        return url ? (
+                          <Button
+                            size="sm"
+                            onClick={() => window.open(url, "_blank")}
+                            className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          >
+                            <Download className="mr-1 h-3 w-3" />
+                            Download
+                          </Button>
+                        ) : null
+                      })()}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
