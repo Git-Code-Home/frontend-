@@ -22,6 +22,7 @@ const ClientNewApplication = () => {
   const [passportFile, setPassportFile] = useState<File | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [idCardFile, setIdCardFile] = useState<File | null>(null)
+  const [filledTemplateFile, setFilledTemplateFile] = useState<File | null>(null)
   const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
 
   useEffect(() => {
@@ -84,7 +85,7 @@ const ClientNewApplication = () => {
       const appId = created && created._id
 
       // If there are no files to upload, we're done
-      const hasFiles = passportFile || photoFile || idCardFile || Object.values(dynamicDocs || {}).some((f) => !!f)
+  const hasFiles = passportFile || photoFile || idCardFile || filledTemplateFile || Object.values(dynamicDocs || {}).some((f) => !!f)
 
       if (!hasFiles) {
         toast({ title: "Submitted", description: "Your application was submitted.", variant: "default" })
@@ -96,6 +97,7 @@ const ClientNewApplication = () => {
       if (passportFile) fm.append("passport", passportFile)
       if (photoFile) fm.append("photo", photoFile)
       if (idCardFile) fm.append("idCard", idCardFile)
+  if (filledTemplateFile) fm.append("filledTemplate", filledTemplateFile)
 
       // Append dynamic template-named required docs using the exact template keys
       Object.entries(dynamicDocs || {}).forEach(([key, file]) => {
@@ -252,7 +254,17 @@ const ClientNewApplication = () => {
                 </div>
               )}
 
-              {/* Legacy upload fields */}
+                    {/* Template PDF download + filled-template upload */}
+                    {template?.formPdfUrl && (
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-medium">Download Template</Label>
+                        <a href={template.formPdfUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline">
+                          Download blank {template.title || selectedCountry} form
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Legacy upload fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="passport">Passport (main copy)</Label>
@@ -266,6 +278,10 @@ const ClientNewApplication = () => {
                   <Label htmlFor="idCard">ID Card</Label>
                   <Input id="idCard" type="file" accept="image/*,application/pdf" onChange={(e) => setIdCardFile(e.target.files?.[0] || null)} />
                 </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="filledTemplate">Filled Template (PDF)</Label>
+                        <Input id="filledTemplate" type="file" accept="application/pdf" onChange={(e) => setFilledTemplateFile(e.target.files?.[0] || null)} />
+                      </div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
