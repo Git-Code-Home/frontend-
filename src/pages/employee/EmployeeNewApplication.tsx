@@ -2502,6 +2502,8 @@ const EmployeeApplications = () => {
                 <DialogTitle>Create New Application</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateApplication} className="space-y-4">
+                {/* Scrollable content: keeps header and footer visible while form fields scroll */}
+                <div className="max-h-[70vh] overflow-y-auto pr-3 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientSelect">Client</Label>
                   <Select value={clientId} onValueChange={setClientId}>
@@ -2715,6 +2717,8 @@ const EmployeeApplications = () => {
                     />
                   </div>
                 </div>
+
+                </div>{/* end scrollable container */}
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button
