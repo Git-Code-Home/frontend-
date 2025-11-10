@@ -2047,7 +2047,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { createApplication, uploadApplicationDocuments, getMyClients } from "../../lib/employee"
+import { createApplication, uploadApplicationDocuments, getMyClients, getCountries, getTemplateByCountry } from "../../lib/employee"
+import FieldRenderer from "@/components/FieldRenderer"
+import BASE_URL from "@/lib/BaseUrl"
 
 type ApplicationItem = {
   id: string
@@ -2091,6 +2093,14 @@ const EmployeeApplications = () => {
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
+
+  // Dynamic template state
+  const [countries, setCountries] = useState<Array<{ name: string; slug: string }>>([])
+  const [selectedCountry, setSelectedCountry] = useState<string>("dubai")
+  const [template, setTemplate] = useState<any | null>(null)
+  const [formDataDynamic, setFormDataDynamic] = useState<Record<string, any>>({})
+  const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
+  const [templateLoading, setTemplateLoading] = useState(false)
 
   // Modals state
   const [selectedApp, setSelectedApp] = useState<ApplicationItem | null>(null)
@@ -2188,6 +2198,17 @@ const EmployeeApplications = () => {
       try {
         const data = await getMyClients()
         setClients(data)
+        // load countries for dynamic templates
+        try {
+          const cs = await getCountries()
+          setCountries(cs || [])
+          // if seeded, ensure selectedCountry exists
+          if (cs && cs.length && !cs.find((c: any) => c.slug === selectedCountry)) {
+            setSelectedCountry(cs[0].slug)
+          }
+        } catch (err) {
+          console.warn("Failed to load countries:", err)
+        }
       } catch (error) {
         toast({ title: "Error", description: "Failed to fetch clients", variant: "destructive" })
       } finally {
@@ -2197,6 +2218,31 @@ const EmployeeApplications = () => {
     fetchClients()
   }, [toast])
 
+  // load template when selectedCountry changes
+  useEffect(() => {
+    let mounted = true
+    const loadTemplate = async () => {
+      try {
+        if (!selectedCountry) return
+        setTemplateLoading(true)
+        const t = await getTemplateByCountry(selectedCountry)
+        if (mounted) {
+          setTemplate(t)
+          setFormDataDynamic({})
+          setDynamicDocs({})
+        }
+      } catch (err) {
+        if (mounted) setTemplate(null)
+      } finally {
+        if (mounted) setTemplateLoading(false)
+      }
+    }
+    loadTemplate()
+    return () => {
+      mounted = false
+    }
+  }, [selectedCountry])
+
   async function handleCreateApplication(e: React.FormEvent) {
     e.preventDefault()
     try {
@@ -2205,30 +2251,38 @@ const EmployeeApplications = () => {
         toast({ title: "Missing fields", description: "Client and Visa Type are required.", variant: "destructive" })
         return
       }
+      // include dynamic country and formData in payload
+      const { applicationId } = await createApplication({
+        clientId,
+        visaType: visaTypeCreate,
+        country: selectedCountry,
+        formData: formDataDynamic,
+      } as any)
 
-      const { applicationId } = await createApplication({ clientId, visaType: visaTypeCreate })
+      // gather files (legacy + dynamic requiredDocs)
+      const form = new FormData()
+      if (passportFile) form.append("passport", passportFile)
+      if (photoFile) form.append("photo", photoFile)
+      if (idCardFile) form.append("idCard", idCardFile)
+      if (passportFirstPageFile) form.append("passportFirstPage", passportFirstPageFile)
+      if (passportCoverPageFile) form.append("passportCoverPage", passportCoverPageFile)
+      if (birthCertificateFile) form.append("birthCertificate", birthCertificateFile)
+      if (bayFormFile) form.append("bForm", bayFormFile)
+      if (paymentReceiptFile) form.append("paymentReceipt", paymentReceiptFile)
 
-      const hasAnyFile =
-        passportFile ||
-        photoFile ||
-        idCardFile ||
-        passportFirstPageFile ||
-        passportCoverPageFile ||
-        birthCertificateFile ||
-        bayFormFile ||
-        paymentReceiptFile
+      // include dynamic docs under their raw names (backend will accept known fields)
+      Object.entries(dynamicDocs).forEach(([key, file]) => {
+        if (file) form.append(key, file)
+      })
+
+      const hasAnyFile = Array.from(form.keys()).length > 0
 
       if (applicationId && hasAnyFile) {
-        await uploadApplicationDocuments({
-          applicationId,
-          passport: passportFile || undefined,
-          photo: photoFile || undefined,
-          idCard: idCardFile || undefined,
-          passportFirstPage: passportFirstPageFile || undefined,
-          passportCoverPage: passportCoverPageFile || undefined,
-          birthCertificate: birthCertificateFile || undefined,
-          bayForm: bayFormFile || undefined,
-          paymentReceipt: paymentReceiptFile || undefined,
+        const token = typeof window !== "undefined" ? localStorage.getItem("employeeToken") : null
+        await fetch(`${BASE_URL}/api/employee/applications/${applicationId}/upload`, {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: form,
         })
       }
 
@@ -2460,6 +2514,26 @@ const EmployeeApplications = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                    <SelectTrigger id="country" className="rounded-2xl">
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl">
+                      {countries.length === 0 ? (
+                        <SelectItem value="dubai">Dubai</SelectItem>
+                      ) : (
+                        countries.map((c) => (
+                          <SelectItem key={c.slug} value={c.slug}>
+                            {c.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="visaType">Visa Type</Label>
                   <Select value={visaTypeCreate} onValueChange={setVisaTypeCreate}>
                     <SelectTrigger id="visaType" className="rounded-2xl">
@@ -2473,6 +2547,42 @@ const EmployeeApplications = () => {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Dynamic template fields (if template exists) */}
+                {templateLoading ? (
+                  <div>Loading template...</div>
+                ) : template?.fields ? (
+                  <div className="col-span-1 sm:col-span-2 md:col-span-3">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm">{template.title || `Additional details for ${selectedCountry}`}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <FieldRenderer fields={template.fields} formData={formDataDynamic} setFormData={setFormDataDynamic} />
+
+                        {/* requiredDocs inputs */}
+                        {Array.isArray(template.requiredDocs) && template.requiredDocs.length > 0 && (
+                          <div className="mt-4">
+                            <h4 className="text-sm font-medium mb-2">Required Documents</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {template.requiredDocs.map((doc: string) => (
+                                <div className="space-y-2" key={doc}>
+                                  <Label htmlFor={`doc-${doc}`}>{doc}</Label>
+                                  <Input
+                                    id={`doc-${doc}`}
+                                    type="file"
+                                    accept="image/*,application/pdf"
+                                    onChange={(e) => setDynamicDocs({ ...dynamicDocs, [doc]: e.target.files?.[0] || null })}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : null}
 
                 {/* Uploads */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
