@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { FileText, Clock, CheckCircle, Calendar, Plus, Download, AlertTriangle } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 const ClientDashboard = () => {
   const myStats = [
@@ -63,6 +64,8 @@ const ClientDashboard = () => {
     return diffDays
   }
 
+  const navigate = useNavigate()
+
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
       <div className="space-y-6 sm:space-y-8">
@@ -73,7 +76,10 @@ const ClientDashboard = () => {
             </h1>
             <p className="text-slate-600 mt-1">Track your visa applications and manage your profile</p>
           </div>
-          <Button className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
+          <Button
+            onClick={() => navigate("/client/new-application")}
+            className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6"
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Application
           </Button>
@@ -143,6 +149,7 @@ const ClientDashboard = () => {
               <div className="space-y-3">
                 <Button
                   variant="outline"
+                  onClick={() => navigate("/client/new-application")}
                   className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                 >
                   <Plus className="mr-2 h-4 w-4" />
@@ -150,6 +157,7 @@ const ClientDashboard = () => {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={() => navigate("/client/documents")}
                   className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                 >
                   <FileText className="mr-2 h-4 w-4" />
@@ -157,6 +165,7 @@ const ClientDashboard = () => {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={() => navigate("/client/appointments")}
                   className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                 >
                   <Calendar className="mr-2 h-4 w-4" />
@@ -164,6 +173,7 @@ const ClientDashboard = () => {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={() => navigate("/client/invoices")}
                   className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                 >
                   <Download className="mr-2 h-4 w-4" />
@@ -220,6 +230,7 @@ const ClientDashboard = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => navigate(`/client/applications/${app.id}`)}
                       className="rounded-2xl border-slate-200 hover:bg-slate-50 bg-transparent"
                     >
                       View Details
@@ -227,6 +238,7 @@ const ClientDashboard = () => {
                     {app.status === "Approved" && (
                       <Button
                         size="sm"
+                        onClick={() => (window.location.href = `/client/applications/${app.id}/download`)}
                         className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                       >
                         <Download className="mr-1 h-3 w-3" />

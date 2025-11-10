@@ -2201,11 +2201,13 @@ const EmployeeApplications = () => {
         // load countries for dynamic templates
         try {
           const cs = await getCountries()
-          setCountries(cs || [])
-          // if seeded, ensure selectedCountry exists
-          if (cs && cs.length && !cs.find((c: any) => c.slug === selectedCountry)) {
-            setSelectedCountry(cs[0].slug)
-          }
+            // only keep active countries
+            const active = (cs || []).filter((c: any) => c.active !== false)
+            setCountries(active || [])
+            // if seeded, ensure selectedCountry exists
+            if (active && active.length && !active.find((c: any) => c.slug === selectedCountry)) {
+              setSelectedCountry(active[0].slug)
+            }
         } catch (err) {
           console.warn("Failed to load countries:", err)
         }

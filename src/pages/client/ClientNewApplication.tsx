@@ -17,12 +17,23 @@ const ClientNewApplication = () => {
   const [selectedCountry, setSelectedCountry] = useState<string>("dubai")
   const [template, setTemplate] = useState<any | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
+  const [visaType, setVisaType] = useState<string>("")
+  const [visaDuration, setVisaDuration] = useState<string>("")
+  const [passportFile, setPassportFile] = useState<File | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [idCardFile, setIdCardFile] = useState<File | null>(null)
+  const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
 
   useEffect(() => {
     const load = async () => {
       try {
         const cs = await getCountries()
-        setCountries(cs || [])
+        // only show active countries returned by the API
+        const active = (cs || []).filter((c: any) => c.active !== false)
+        setCountries(active)
+        if (active && active.length) {
+          setSelectedCountry(active[0].slug)
+        }
       } catch (err) {
         console.warn("Failed to load countries:", err)
       }
@@ -49,10 +60,12 @@ const ClientNewApplication = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // build payload from formData and simple fields
+
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
-      const payload: any = { country: selectedCountry, formData }
+      const payload: any = { country: selectedCountry, formData, visaType, visaDuration }
+
+      // Create the application first
       const res = await fetch(`${BASE_URL}/api/client/applications`, {
         method: "POST",
         headers: {
@@ -64,10 +77,49 @@ const ClientNewApplication = () => {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err?.message || "Failed to submit application")
+        throw new Error(err?.message || "Failed to create application")
       }
 
-      toast({ title: "Submitted", description: "Your application was submitted.", variant: "default" })
+      const created = await res.json()
+      const appId = created && created._id
+
+      // If there are no files to upload, we're done
+      const hasFiles = passportFile || photoFile || idCardFile || Object.values(dynamicDocs || {}).some((f) => !!f)
+
+      if (!hasFiles) {
+        toast({ title: "Submitted", description: "Your application was submitted.", variant: "default" })
+        return
+      }
+
+      // Build FormData for files
+      const fm = new FormData()
+      if (passportFile) fm.append("passport", passportFile)
+      if (photoFile) fm.append("photo", photoFile)
+      if (idCardFile) fm.append("idCard", idCardFile)
+
+      // Append dynamic template-named required docs using the exact template keys
+      Object.entries(dynamicDocs || {}).forEach(([key, file]) => {
+        if (file) {
+          // Use the template doc label as the field name so the server will store documents.<label>
+          fm.append(key, file)
+        }
+      })
+
+      // POST files to the upload endpoint
+      const upRes = await fetch(`${BASE_URL}/api/client/applications/${appId}/upload`, {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: fm,
+      })
+
+      if (!upRes.ok) {
+        const err = await upRes.json().catch(() => ({}))
+        throw new Error(err?.message || "Failed to upload documents")
+      }
+
+      toast({ title: "Submitted", description: "Your application and documents were uploaded.", variant: "default" })
     } catch (err: any) {
       console.error("Client new application submit failed:", err)
       toast({ title: "Error", description: err?.message || "Failed to submit", variant: "destructive" })
@@ -115,7 +167,7 @@ const ClientNewApplication = () => {
 
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">Visa Type</Label>
-                  <Select>
+                  <Select value={visaType} onValueChange={(v) => setVisaType(v)}>
                     <SelectTrigger className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
                       <SelectValue placeholder="Select visa type" />
                     </SelectTrigger>
@@ -130,7 +182,7 @@ const ClientNewApplication = () => {
 
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-medium">Duration</Label>
-                  <Select>
+                  <Select value={visaDuration} onValueChange={(v) => setVisaDuration(v)}>
                     <SelectTrigger className="rounded-2xl border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>
@@ -180,10 +232,56 @@ const ClientNewApplication = () => {
                 </div>
               )}
 
+              {/* requiredDocs and document uploads (including dynamic template docs) */}
+              {template?.requiredDocs && Array.isArray(template.requiredDocs) && template.requiredDocs.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Required Documents</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {template.requiredDocs.map((doc: string) => (
+                      <div className="space-y-2" key={doc}>
+                        <Label htmlFor={`doc-${doc}`}>{doc}</Label>
+                        <Input
+                          id={`doc-${doc}`}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setDynamicDocs({ ...dynamicDocs, [doc]: e.target.files?.[0] || null })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Legacy upload fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="passport">Passport (main copy)</Label>
+                  <Input id="passport" type="file" accept="image/*,application/pdf" onChange={(e) => setPassportFile(e.target.files?.[0] || null)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="photo">Photo</Label>
+                  <Input id="photo" type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="idCard">ID Card</Label>
+                  <Input id="idCard" type="file" accept="image/*,application/pdf" onChange={(e) => setIdCardFile(e.target.files?.[0] || null)} />
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"
+                  onClick={async () => {
+                    // navigate to upload documents page
+                    const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
+                    if (!token) {
+                      toast({ title: "Not logged in", description: "Please login to upload documents", variant: "destructive" })
+                      return
+                    }
+                    // go to documents page
+                    window.location.href = "/client/documents"
+                  }}
                   className="rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 px-6 bg-transparent"
                 >
                   <Upload className="mr-2 h-4 w-4" />

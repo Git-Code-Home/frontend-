@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { FileText, Download, Eye } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 const ClientApplications = () => {
   const applications = [
@@ -36,6 +37,8 @@ const ClientApplications = () => {
         return "bg-slate-100 text-slate-800 border-slate-200"
     }
   }
+
+  const navigate = useNavigate()
 
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
@@ -94,6 +97,7 @@ const ClientApplications = () => {
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => navigate(`/client/applications/${app.id}`)}
                     className="rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                   >
                     <Eye className="mr-1 h-4 w-4" />
@@ -102,6 +106,7 @@ const ClientApplications = () => {
                   {app.status === "Approved" && (
                     <Button
                       size="sm"
+                      onClick={() => (window.location.href = `/client/applications/${app.id}/download`)}
                       className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <Download className="mr-1 h-4 w-4" />

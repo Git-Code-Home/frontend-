@@ -109,9 +109,11 @@ const EmployeeApplications = () => {
         console.log("[v0] Clients fetched:", clientsData)
         console.log("[v0] Applications fetched:", applicationsData)
         console.log("[v0] Countries fetched:", countriesData)
-        setClients(clientsData)
-        setApplications(applicationsData)
-        setCountries(countriesData || [])
+  setClients(clientsData)
+  setApplications(applicationsData)
+  // show only active countries
+  const active = (countriesData || []).filter((c: any) => c.active !== false)
+  setCountries(active || [])
       } catch (error) {
         console.error("[v0] Error fetching data:", error)
         toast({ title: "Error", description: "Failed to fetch data", variant: "destructive" })
