@@ -39,7 +39,7 @@ const ClientNewApplication = () => {
           setSelectedCountry(active[0].slug)
           // if the first active is Schengen, preselect first member (optional)
           const schengenMembers = active.filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
-          if (active[0].slug === "schengen" && schengenMembers.length) {
+          if (String(active[0].slug || "").toLowerCase() === "schengen" && schengenMembers.length) {
             setSelectedSchengenMember(schengenMembers[0].slug)
           }
         }
@@ -180,7 +180,7 @@ const ClientNewApplication = () => {
                 </div>
 
                 {/* When Schengen is chosen, show member country dropdown */}
-                {selectedCountry === "schengen" && (
+                {String((selectedCountry || "")).toLowerCase() === "schengen" && (
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-medium">Schengen Member Country</Label>
                     <Select value={selectedSchengenMember} onValueChange={(v) => setSelectedSchengenMember(v)}>

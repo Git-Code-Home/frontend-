@@ -2212,7 +2212,7 @@ const EmployeeApplications = () => {
             setSelectedCountry(active[0].slug)
           }
           // if the top-level is schengen, preselect first member
-          if (active && active.length && active[0].slug === "schengen") {
+          if (active && active.length && String((active[0].slug || "")).toLowerCase() === "schengen") {
             const members = active.filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
             if (members.length) setSelectedSchengenMember(members[0].slug)
           }
@@ -2550,7 +2550,7 @@ const EmployeeApplications = () => {
                   </Select>
                 </div>
 
-                {selectedCountry === "schengen" && (
+                {String((selectedCountry || "")).toLowerCase() === "schengen" && (
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-medium">Schengen Member Country</Label>
                     <Select value={selectedSchengenMember} onValueChange={(v) => setSelectedSchengenMember(v)}>
