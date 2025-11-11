@@ -100,6 +100,11 @@ const ClientNewApplication = () => {
 
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
+      if (!token) {
+        toast({ title: "Not logged in", description: "Please login to submit an application", variant: "destructive" })
+        navigate("/client/login")
+        return
+      }
   // If Schengen is selected and a member is chosen, use the member slug as the application's country
   const effectiveCountry = selectedCountry === "schengen" && selectedSchengenMember ? selectedSchengenMember : selectedCountry
   const payload: any = { country: effectiveCountry, formData, visaType, visaDuration }

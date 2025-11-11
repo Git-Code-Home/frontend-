@@ -2212,8 +2212,8 @@ const EmployeeApplications = () => {
             setSelectedCountry(active[0].slug)
           }
           // if the top-level is schengen, preselect first member
-          if (active && active.length && String((active[0].slug || "")).toLowerCase() === "schengen") {
-            const members = active.filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
+          if (active && active.length && active[0].slug === "schengen") {
+            const members = active.filter((c: any) => c.region === "schengen" && c.slug !== "schengen")
             if (members.length) setSelectedSchengenMember(members[0].slug)
           }
         } catch (err) {
@@ -2254,32 +2254,6 @@ const EmployeeApplications = () => {
       mounted = false
     }
   }, [selectedCountry])
-
-  // Schengen members: prefer API list, but fallback to a safe list if backend missing members
-  const schengenFallback = [
-    { name: "France", slug: "france" },
-    { name: "Germany", slug: "germany" },
-    { name: "Spain", slug: "spain" },
-    { name: "Italy", slug: "italy" },
-    { name: "Netherlands", slug: "netherlands" },
-    { name: "Belgium", slug: "belgium" },
-    { name: "Portugal", slug: "portugal" },
-    { name: "Greece", slug: "greece" },
-    { name: "Austria", slug: "austria" },
-    { name: "Sweden", slug: "sweden" },
-    { name: "Norway", slug: "norway" },
-  ]
-
-  const schengenMembersFromApi = (countries || []).filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
-  const schengenMembersToShow = schengenMembersFromApi.length ? schengenMembersFromApi : schengenFallback
-
-  useEffect(() => {
-    if (String((selectedCountry || "")).toLowerCase() === "schengen") {
-      if (!selectedSchengenMember && schengenMembersToShow.length) {
-        setSelectedSchengenMember(schengenMembersToShow[0].slug)
-      }
-    }
-  }, [selectedCountry, selectedSchengenMember, schengenMembersToShow])
 
   async function handleCreateApplication(e: React.FormEvent) {
     e.preventDefault()
@@ -2529,7 +2503,7 @@ const EmployeeApplications = () => {
               </DialogHeader>
               <form onSubmit={handleCreateApplication} className="space-y-4">
                 {/* Scrollable content: keeps header and footer visible while form fields scroll */}
-                <div className="max-h-[80vh] overflow-y-auto pr-3 space-y-4">
+                <div className="max-h-[70vh] overflow-y-auto pr-3 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientSelect">Client</Label>
                   <Select value={clientId} onValueChange={setClientId}>
@@ -2576,7 +2550,7 @@ const EmployeeApplications = () => {
                   </Select>
                 </div>
 
-                {String((selectedCountry || "")).toLowerCase() === "schengen" && (
+                {selectedCountry === "schengen" && (
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-medium">Schengen Member Country</Label>
                     <Select value={selectedSchengenMember} onValueChange={(v) => setSelectedSchengenMember(v)}>
@@ -2584,11 +2558,13 @@ const EmployeeApplications = () => {
                         <SelectValue placeholder="Select Schengen country" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {schengenMembersToShow.map((c) => (
-                          <SelectItem key={c.slug} value={c.slug}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
+                        {countries
+                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
+                          .map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </div>

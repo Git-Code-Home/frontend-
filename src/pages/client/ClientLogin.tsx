@@ -141,6 +141,15 @@ const ClientLogin = () => {
           title: "Login Successful",
           description: "Welcome to your Client Portal",
         })
+        // Save a demo client token so protected client flows work in the demo
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("clientToken", "demo-client-token")
+            localStorage.setItem("client", JSON.stringify({ email }))
+          }
+        } catch (err) {
+          console.warn("Unable to persist demo token:", err)
+        }
         navigate("/client/dashboard")
       } else {
         toast({
