@@ -2213,7 +2213,7 @@ const EmployeeApplications = () => {
           }
           // if the top-level is schengen, preselect first member
           if (active && active.length && active[0].slug === "schengen") {
-            const members = active.filter((c: any) => c.region === "schengen" && c.slug !== "schengen")
+            const members = active.filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
             if (members.length) setSelectedSchengenMember(members[0].slug)
           }
         } catch (err) {
@@ -2503,7 +2503,7 @@ const EmployeeApplications = () => {
               </DialogHeader>
               <form onSubmit={handleCreateApplication} className="space-y-4">
                 {/* Scrollable content: keeps header and footer visible while form fields scroll */}
-                <div className="max-h-[70vh] overflow-y-auto pr-3 space-y-4">
+                <div className="max-h-[80vh] overflow-y-auto pr-3 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="clientSelect">Client</Label>
                   <Select value={clientId} onValueChange={setClientId}>
@@ -2559,7 +2559,7 @@ const EmployeeApplications = () => {
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
                         {countries
-                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
+                          .filter((c) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
                           .map((c) => (
                             <SelectItem key={c.slug} value={c.slug}>
                               {c.name}

@@ -38,7 +38,7 @@ const ClientNewApplication = () => {
         if (active && active.length) {
           setSelectedCountry(active[0].slug)
           // if the first active is Schengen, preselect first member (optional)
-          const schengenMembers = active.filter((c: any) => c.region === "schengen" && c.slug !== "schengen")
+          const schengenMembers = active.filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
           if (active[0].slug === "schengen" && schengenMembers.length) {
             setSelectedSchengenMember(schengenMembers[0].slug)
           }
@@ -189,7 +189,7 @@ const ClientNewApplication = () => {
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
                         {countries
-                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
+                          .filter((c) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
                           .map((c) => (
                             <SelectItem key={c.slug} value={c.slug}>
                               {c.name}
