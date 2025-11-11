@@ -125,57 +125,21 @@ export async function createApplication(input: CreateApplicationInput) {
 export async function uploadApplicationDocuments(input: UploadDocsInput) {
   const token = getToken()
   if (!token) throw new Error("Not authenticated")
-
-  // Decide whether to call single-document endpoint (when exactly one file provided)
-  const filesMap: Record<string, File> = {}
-  const keys: (keyof UploadDocsInput)[] = [
-    "passport",
-    "photo",
-    "idCard",
-    "birthCertificate",
-    "bForm",
-    "passportFirstPage",
-    "passportCoverPage",
-    "paymentReceipt",
-  ]
-
-  for (const k of keys) {
-    const f = input[k] as File | null | undefined
-    if (f) filesMap[k as string] = f
-  }
-
-  const fileKeys = Object.keys(filesMap)
-  if (fileKeys.length === 0) return { message: "No files to upload" }
-
-  if (fileKeys.length === 1) {
-    // Single-file upload: use the lighter endpoint which does NOT validate full requiredDocs
-    const singleKey = fileKeys[0]
-    const singleFile = filesMap[singleKey]
-    const form = new FormData()
-    form.append("file", singleFile)
-    form.append("fieldName", singleKey)
-
-    const res = await fetch(`${BASE_URL}/api/employee/applications/${input.applicationId}/upload-document`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: form,
-    })
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}))
-      throw new Error(err?.message || "Failed to upload document")
-    }
-
-    return res.json()
-  }
-
-  // Multiple files: use the full upload endpoint which performs requiredDocs validation
   const form = new FormData()
-  for (const k of fileKeys) {
-    form.append(k, filesMap[k])
+
+  const maybe = (name: keyof UploadDocsInput) => {
+    const f = input[name] as File | null | undefined
+    if (f) form.append(name, f)
   }
+
+  maybe("passport")
+  maybe("photo")
+  maybe("idCard")
+  maybe("birthCertificate")
+  maybe("bForm")
+  maybe("passportFirstPage")
+  maybe("passportCoverPage")
+  maybe("paymentReceipt")
 
   const res = await fetch(`${BASE_URL}/api/employee/applications/${input.applicationId}/upload`, {
     method: "POST",
