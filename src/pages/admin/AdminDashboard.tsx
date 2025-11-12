@@ -269,6 +269,7 @@ import useSWR from "swr"
 import BASE_URL from "@/lib/BaseUrl"
 import { useNavigate } from "react-router-dom"
 import api from "@/lib/api"
+import adminApi from "@/lib/adminApi"
 
 const fetcher = async (url: string) => {
   // debug: log URL so you can confirm exactly what is being requested
@@ -328,16 +329,17 @@ const AdminDashboard = () => {
 
   // Use the build-time BASE_URL (normalized by `src/lib/BaseUrl.tsx`).
   // Make sure VITE_API_BASE_URL is set in your production env and the app is rebuilt.
-  const apiRoot = BASE_URL?.replace(/\/$/, "") || ""
-  const dashboardUrl = `${apiRoot}/api/admin/clients`
-  const { data, error } = useSWR(dashboardUrl, fetcher)
-
-  // No runtime diagnostics here. Rely on build-time env (VITE_API_BASE_URL) and
-  // server-side CORS configuration. If you still see incorrect requests in
-  // the deployed app, trigger a rebuild in Vercel after setting the env var.
-
-  const clients = Array.isArray(data?.clients) ? data.clients : []
-  const applications = Array.isArray(data?.applications) ? data.applications : []
+  const { data: overviewData, error } = useSWR("/overview", () => adminApi.get("/overview"))
+  
+  // Overview API returns numeric aggregates. Clients/applications lists are
+  // fetched elsewhere (clients page). Use overview data to populate the dashboard cards.
+  const clientsCount = overviewData?.totalClients ?? 0
+  const activeApplicationsCount = overviewData?.activeApplications ?? 0
+  const expiringVisasCount = overviewData?.expiringVisas ?? 0
+  const revenueAmount = overviewData?.revenue ?? 0
+  
+  // Optional applications list returned by the overview endpoint; default to empty array
+  const applications: any[] = Array.isArray(overviewData?.applications) ? overviewData!.applications : []
 
   // Normalize status (some docs may have `status`, others `applicationStatus`)
   const normStatus = (app: any) => {
@@ -366,55 +368,41 @@ const AdminDashboard = () => {
       passportCoverPage: "Passport Cover Page",
       paymentReceipt: "Payment Receipt"
     }
-    return labels[docType] || docType.charAt(0).toUpperCase() + docType.slice(1)
+    // return known label or a readable fallback
+    return labels[docType] || docType.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase())
   }
-
-  const statusCounts = applications.reduce((acc: Record<string, number>, a: any) => {
-    const s = normStatus(a)
+  // We use overviewData to populate the top-level stats. Other lists (recent applications)
+  // are loaded by their respective pages; keep recent/applications empty here.
+  // Compute status counts from the optional applications list (overview may include apps)
+  const statusCounts: Record<string, number> = applications.reduce((acc: Record<string, number>, a: any) => {
+    const s = (normStatus(a) || "Processing") as string
     acc[s] = (acc[s] || 0) + 1
     return acc
-  }, {})
-
-  // Expiring visas = applications with an expiryDate within next 30 days
-  const expiringWithinDays = (days = 30) => {
-    const now = Date.now()
-    const ms = days * 24 * 60 * 60 * 1000
-    return applications.filter((a: any) => {
-      const exp = a?.expiryDate ? new Date(a.expiryDate).getTime() : NaN
-      return Number.isFinite(exp) && exp - now <= ms && exp - now >= 0
-    }).length
-  }
-
-  // Total revenue (AED) = sum of paid invoices
-  const totalRevenue = applications.reduce((sum: number, a: any) => {
-    const paid = a?.invoice?.paid
-    const amt = Number(a?.invoice?.amount) || 0
-    return sum + (paid ? amt : 0)
-  }, 0)
+  }, {} as Record<string, number>)
 
   const stats = [
     {
       title: "Total Clients",
-      value: clients.length.toLocaleString(),
+      value: clientsCount.toLocaleString(),
       icon: Users,
       change: "+0%",
       color: "text-accent",
     },
     {
       title: "Active Applications",
-      value: applications.length.toString(),
+      value: String(activeApplicationsCount),
       icon: FileText,
       change: "+0%",
       color: "text-primary",
     },
     {
       title: "Expiring Visas",
-      value: String(expiringWithinDays(30)),
+      value: String(expiringVisasCount),
       icon: Clock,
       change: "+0%",
       color: "text-warning",
     },
-    { title: "Revenue (AED)", value: totalRevenue.toLocaleString(), icon: DollarSign, change: "—", color: "text-success" },
+    { title: "Revenue (AED)", value: Number(revenueAmount).toLocaleString(), icon: DollarSign, change: "—", color: "text-success" },
   ]
   const handleAddemployee = () => {
     navigate('/admin/employees')

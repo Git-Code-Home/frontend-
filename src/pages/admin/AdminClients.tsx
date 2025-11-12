@@ -727,6 +727,7 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import BASE_URL from "@/lib/BaseUrl"
+import adminApi from "@/lib/adminApi"
 
 interface Employee {
   _id: string
@@ -782,6 +783,17 @@ interface ApiResponse {
 
 const AdminClients = () => {
   const [searchTerm, setSearchTerm] = useState("")
+
+  // base URL and auth helper (used by legacy fetch calls)
+  const apiBase = BASE_URL.replace(/\/$/, "")
+
+  const getAuthHeaders = () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    }
+  }
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
   const [clients, setClients] = useState<Client[]>([])
@@ -810,58 +822,44 @@ const AdminClients = () => {
   const [reassignLoading, setReassignLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  const apiBase = BASE_URL.replace(/\/$/, "")
-
-  // common auth headers
-  const getAuthHeaders = () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
-    return {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    }
-  }
-
-  // Fetch initial clients + applications
-  const fetchData = async () => {
-    try {
-      setRefreshing(true)
-      const res = await fetch(`${apiBase}/api/admin/clients`, {
-        headers: getAuthHeaders(),
-      })
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch data: ${res.status}`)
-      }
-
-      const data: ApiResponse = await res.json()
-      setClients(Array.isArray(data.clients) ? data.clients : [])
-      setApplications(Array.isArray(data.applications) ? data.applications : [])
-    } catch (err) {
-      console.error("Error fetching data:", err)
-      setError(err instanceof Error ? err.message : "An error occurred")
-    } finally {
-      setRefreshing(false)
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    setLoading(true)
-    fetchData()
-
-    // Auto-refresh when tab becomes visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchData()
+  // Fetch initial clients + applications using adminApi (centralized auth header)
+    const fetchData = async () => {
+      try {
+        // If this is the very first load show the full loading screen, otherwise use the small refresh indicator.
+        if (clients.length === 0) {
+          setLoading(true)
+        } else {
+          setRefreshing(true)
+        }
+  
+        const data: ApiResponse = await adminApi.get("/clients")
+        setClients(Array.isArray(data.clients) ? data.clients : [])
+        setApplications(Array.isArray(data.applications) ? data.applications : [])
+        setError(null)
+      } catch (err) {
+        console.error("Error fetching data:", err)
+        setError(err instanceof Error ? err.message : "An error occurred")
+      } finally {
+        setLoading(false)
+        setRefreshing(false)
       }
     }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
+  
+    useEffect(() => {
+      // initial load
+      fetchData()
+  
+      // Auto-refresh when tab becomes visible
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === "visible") {
+          fetchData()
+        }
+      }
+      document.addEventListener("visibilitychange", handleVisibilityChange)
+  
+      return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }, [])
 
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Helper functions
   const getAssignedEmployeeName = (client: Client): string => {
