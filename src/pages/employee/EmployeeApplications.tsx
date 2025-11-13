@@ -26,8 +26,9 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+// Dialog (create application) removed per request
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { createApplication, uploadApplicationDocuments, getMyClients, getMyApplications } from "@/lib/employee"
@@ -68,7 +69,7 @@ const EmployeeApplications = () => {
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
-  const [openCreate, setOpenCreate] = useState(false)
+  // Create application modal removed; leaving state variables for other flows
   const [clientId, setClientId] = useState("")
   const [visaTypeCreate, setVisaTypeCreate] = useState("")
   const [visaDuration, setVisaDuration] = useState("")
@@ -209,15 +210,14 @@ const EmployeeApplications = () => {
   setSelectedCountry("dubai")
   setTemplate(null)
   setFormData({})
-      setPassportFile(null)
+  setPassportFile(null)
       setPhotoFile(null)
       setIdCardFile(null)
       setBirthCertificateFile(null)
       setBFormFile(null)
       setPassportFirstPageFile(null)
       setPassportCoverPageFile(null)
-      setPaymentReceiptFile(null)
-      setOpenCreate(false)
+  setPaymentReceiptFile(null)
     } catch (err: any) {
       console.error("[v0] Error creating application:", err)
       toast({ title: "Error", description: err?.message || "Failed to create application", variant: "destructive" })
@@ -437,211 +437,7 @@ const EmployeeApplications = () => {
           </Card>
         </div>
 
-        <div className="flex justify-end">
-          <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-            <DialogTrigger asChild>
-              <Button className="rounded-2xl bg-blue-600 hover:bg-blue-700 text-white">+ Create Application</Button>
-            </DialogTrigger>
-            <DialogContent className="rounded-2xl sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Application</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateApplication} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientSelect">Client</Label>
-                  <Select value={clientId} onValueChange={setClientId}>
-                    <SelectTrigger id="clientSelect" className="rounded-2xl">
-                      <SelectValue
-                        placeholder={
-                          loading ? "Loading clients..." : clients.length === 0 ? "No clients found" : "Select a client"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-2xl">
-                      {clients.length === 0 ? (
-                        <SelectItem value="no-clients" disabled>
-                          No clients available
-                        </SelectItem>
-                      ) : (
-                        clients.map((client) => (
-                          <SelectItem key={client._id} value={client._id}>
-                            {client.name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country</Label>
-                    <Select value={selectedCountry} onValueChange={(v) => setSelectedCountry(v)}>
-                      <SelectTrigger id="country" className="rounded-2xl">
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
-                        {countries.length === 0 ? (
-                          <SelectItem value="dubai">Dubai</SelectItem>
-                        ) : (
-                          countries.map((c) => (
-                            <SelectItem key={c.slug} value={c.slug}>
-                              {c.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="visaType">Visa Type</Label>
-                    <Select value={visaTypeCreate} onValueChange={setVisaTypeCreate}>
-                      <SelectTrigger id="visaType" className="rounded-2xl">
-                        <SelectValue placeholder="Select visa type" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
-                        <SelectItem value="Tourist Visa">Tourist Visa</SelectItem>
-                        <SelectItem value="Business Visa">Business Visa</SelectItem>
-                        <SelectItem value="Family Visa">Family Visa</SelectItem>
-                        <SelectItem value="Transit Visa">Transit Visa</SelectItem>
-                        <SelectItem value="Work Visa">Work Visa</SelectItem>
-                        <SelectItem value="Student Visa">Student Visa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="visaDuration">Visa Duration</Label>
-                    <Select value={visaDuration} onValueChange={setVisaDuration}>
-                      <SelectTrigger id="visaDuration" className="rounded-2xl">
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-2xl">
-                        <SelectItem value="14 days">14 Days</SelectItem>
-                        <SelectItem value="30 days">30 Days</SelectItem>
-                        <SelectItem value="60 days">60 Days</SelectItem>
-                        <SelectItem value="90 days">90 Days</SelectItem>
-                        <SelectItem value="6 months">6 Months</SelectItem>
-                        <SelectItem value="1 year">1 Year</SelectItem>
-                        <SelectItem value="2 years">2 Years</SelectItem>
-                        <SelectItem value="3 years">3 Years</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold">Upload Documents (PDF, JPG, PNG)</Label>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="passport" className="text-sm">Passport</Label>
-                      <Input
-                        id="passport"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setPassportFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="photo" className="text-sm">Photo</Label>
-                      <Input
-                        id="photo"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="idCard" className="text-sm">ID Card</Label>
-                      <Input
-                        id="idCard"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="birthCertificate" className="text-sm">Birth Certificate</Label>
-                      <Input
-                        id="birthCertificate"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setBirthCertificateFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="bForm" className="text-sm">B-Form</Label>
-                      <Input
-                        id="bForm"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setBFormFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="passportFirstPage" className="text-sm">Passport First Page</Label>
-                      <Input
-                        id="passportFirstPage"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setPassportFirstPageFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="passportCoverPage" className="text-sm">Passport Cover Page</Label>
-                      <Input
-                        id="passportCoverPage"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setPassportCoverPageFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="paymentReceipt" className="text-sm">Payment Receipt</Label>
-                      <Input
-                        id="paymentReceipt"
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => setPaymentReceiptFile(e.target.files?.[0] || null)}
-                        className="rounded-2xl"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-2xl bg-transparent"
-                    onClick={() => setOpenCreate(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="rounded-2xl bg-blue-600 hover:bg-blue-700" disabled={submitting}>
-                    {submitting ? "Creating..." : "Create"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        {/* Create Application removed from Employee Applications page */}
 
         <Card className="rounded-3xl border-0 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader>
