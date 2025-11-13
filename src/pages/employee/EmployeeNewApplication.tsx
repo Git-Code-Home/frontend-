@@ -2105,6 +2105,32 @@ const EmployeeApplications = () => {
   const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
   const [templateLoading, setTemplateLoading] = useState(false)
 
+  // Schengen members (compute from API; fallback to a safe list if backend missing members)
+  const schengenFallback = [
+    { name: "France", slug: "france" },
+    { name: "Germany", slug: "germany" },
+    { name: "Spain", slug: "spain" },
+    { name: "Italy", slug: "italy" },
+    { name: "Netherlands", slug: "netherlands" },
+    { name: "Belgium", slug: "belgium" },
+    { name: "Portugal", slug: "portugal" },
+    { name: "Greece", slug: "greece" },
+    { name: "Austria", slug: "austria" },
+    { name: "Sweden", slug: "sweden" },
+    { name: "Norway", slug: "norway" },
+  ]
+
+  const schengenMembersFromApi = (countries || []).filter((c: any) => String((c.region || "")).toLowerCase() === "schengen" && c.slug !== "schengen")
+  const schengenMembersToShow = schengenMembersFromApi.length ? schengenMembersFromApi : schengenFallback
+
+  useEffect(() => {
+    if (String((selectedCountry || "")).toLowerCase() === "schengen") {
+      if (!selectedSchengenMember && schengenMembersToShow.length) {
+        setSelectedSchengenMember(schengenMembersToShow[0].slug)
+      }
+    }
+  }, [selectedCountry, selectedSchengenMember, schengenMembersToShow])
+
   // Modals state
   const [selectedApp, setSelectedApp] = useState<ApplicationItem | null>(null)
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false)
@@ -2558,13 +2584,11 @@ const EmployeeApplications = () => {
                         <SelectValue placeholder="Select Schengen country" />
                       </SelectTrigger>
                       <SelectContent className="rounded-2xl">
-                        {countries
-                          .filter((c) => c.region === "schengen" && c.slug !== "schengen")
-                          .map((c) => (
-                            <SelectItem key={c.slug} value={c.slug}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
+                        {schengenMembersToShow.map((c) => (
+                          <SelectItem key={c.slug} value={c.slug}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
