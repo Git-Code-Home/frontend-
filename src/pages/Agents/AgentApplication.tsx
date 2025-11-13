@@ -225,6 +225,48 @@ const handleReject = async (appId: string) => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
 
+  // Download Documents handler (fetch each document and trigger browser download)
+  const downloadDocuments = async (app: Application) => {
+    if (!app.documents || Object.keys(app.documents).length === 0) {
+      toast({ title: "No documents", description: "No documents available for download.", variant: "destructive" })
+      return
+    }
+
+    for (const [key, url] of Object.entries(app.documents)) {
+      if (!url) continue
+      try {
+        const finalUrl = (String(url).startsWith("http://") || String(url).startsWith("https://"))
+          ? String(url)
+          : `${BASE_URL.replace(/\/$/, "")}/${String(url).replace(/^\//, "")}`
+
+        const res = await fetch(finalUrl)
+        if (!res.ok) {
+          console.error("Failed to fetch document:", finalUrl, res.status)
+          toast({ title: "Download failed", description: `Could not download ${key}` , variant: "destructive" })
+          continue
+        }
+
+        const blob = await res.blob()
+        const urlParts = finalUrl.split("?")[0].split("#")[0].split('.')
+        const ext = urlParts.length > 1 ? urlParts.pop() : 'bin'
+        const safeExt = (ext || 'bin').replace(/[^a-z0-9]/gi, '')
+        const filename = `${app._id}_${key}.${safeExt}`
+
+        const blobUrl = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(blobUrl)
+      } catch (err: any) {
+        console.error("Error downloading document", err)
+        toast({ title: "Download error", description: err?.message || `Failed to download ${key}`, variant: "destructive" })
+      }
+    }
+  }
+
   const filtered = useMemo(() => {
     return applications.filter((app) => {
       const displayStatus = getDisplayStatus(app.applicationStatus)
@@ -615,11 +657,7 @@ const handleReject = async (appId: string) => {
                                 <FileText className="mr-2 h-4 w-4" />
                                 Upload Documents
                               </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  /* optional: download docs */
-                                }}
-                              >
+                              <DropdownMenuItem onClick={() => downloadDocuments(application)}>
                                 <Download className="mr-2 h-4 w-4" />
                                 Download Documents
                               </DropdownMenuItem>
