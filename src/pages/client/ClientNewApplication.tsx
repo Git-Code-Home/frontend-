@@ -170,6 +170,30 @@ const ClientNewApplication = () => {
       toast({ title: "Error", description: err?.message || "Failed to submit", variant: "destructive" })
     }
   }
+  const [downloading, setDownloading] = useState(false)
+
+  const handleDownloadRequired = async () => {
+    try {
+      setDownloading(true)
+      const res = await fetch(`/documents/form%20for%20client.pdf`)
+      if (!res.ok) throw new Error(`Failed to fetch document: ${res.status}`)
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      // Use the friendly filename when saving
+      a.download = "form for client.pdf"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err: any) {
+      console.error("Download failed:", err)
+      toast({ title: "Download failed", description: err?.message || "Unable to download file", variant: "destructive" })
+    } finally {
+      setDownloading(false)
+    }
+  }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
       <div className="space-y-6 sm:space-y-8">
@@ -347,11 +371,13 @@ const ClientNewApplication = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
-                <a href="/documents/form%20for%20client.pdf" download>
-                  <button className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6 mr-3">
-                    Download Required Document
-                  </button>
-                </a>
+                <Button
+                  onClick={handleDownloadRequired}
+                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6 mr-3"
+                  disabled={downloading}
+                >
+                  {downloading ? "Downloading..." : "Download Required Document"}
+                </Button>
 
                 <Button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
                   <Send className="mr-2 h-4 w-4" />
