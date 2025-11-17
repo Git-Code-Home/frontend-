@@ -168,14 +168,7 @@ const ClientDashboard = () => {
                   <Plus className="mr-2 h-4 w-4" />
                   Apply for New Visa
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/client/documents")}
-                  className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Upload Documents
-                </Button>
+                {/* Upload Documents removed per request */}
                 <Button
                   variant="outline"
                   onClick={() => navigate("/client/appointments")}

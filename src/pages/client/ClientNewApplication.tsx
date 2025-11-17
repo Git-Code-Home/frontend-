@@ -347,23 +347,6 @@ const ClientNewApplication = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    // navigate to upload documents page using SPA navigation
-                    const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
-                    if (!token) {
-                      toast({ title: "Not logged in", description: "Please login to upload documents", variant: "destructive" })
-                      return
-                    }
-                    navigate("/client/documents")
-                  }}
-                  className="rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 px-6 bg-transparent"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Documents
-                </Button>
                 <Button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
                   <Send className="mr-2 h-4 w-4" />
                   Submit Application

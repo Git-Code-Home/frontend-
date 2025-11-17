@@ -98,7 +98,6 @@
 //     { name: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
 //     { name: "My Applications", href: "/client/applications", icon: FileText },
 //     { name: "New Application", href: "/client/new-application", icon: FileText },
-//     { name: "Documents", href: "/client/documents", icon: FileText },
 //     { name: "Profile", href: "/client/profile", icon: Settings },
 //   ],
 //   agent: [
@@ -322,7 +321,6 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
     { name: "Dashboard", href: "/client/dashboard", icon: LayoutDashboard },
     { name: "My Applications", href: "/client/applications", icon: FileText },
     { name: "New Application", href: "/client/new-application", icon: FileText },
-    { name: "Documents", href: "/client/documents", icon: FileText },
     { name: "Profile", href: "/client/profile", icon: Settings },
   ],
   agent: [
