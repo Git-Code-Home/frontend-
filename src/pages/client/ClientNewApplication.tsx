@@ -347,6 +347,12 @@ const ClientNewApplication = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
+                <a href="/documents/form%20for%20client.pdf" download>
+                  <button className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6 mr-3">
+                    Download Required Document
+                  </button>
+                </a>
+
                 <Button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
                   <Send className="mr-2 h-4 w-4" />
                   Submit Application
