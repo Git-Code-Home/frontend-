@@ -79,6 +79,48 @@ const ClientDashboard = () => {
     }
   }
 
+  const getActiveApplication = () => {
+    try {
+      return applications.find((a) => String(a.applicationStatus).toLowerCase() === "approved") || null
+    } catch (err) {
+      return null
+    }
+  }
+
+  const getDownloadUrlFromApp = (app: any) => {
+    if (!app) return null
+    const docs = app.documents || {}
+    return docs.approvedVisa || docs.filledTemplate || docs.paymentReceipt || docs.passport || docs.photo || Object.values(docs || {})[0] || null
+  }
+
+  const downloadActiveVisa = async () => {
+    const app = getActiveApplication()
+    const url = getDownloadUrlFromApp(app)
+    if (!url) {
+      // show a friendly message if no file available
+      alert("No visa file available to download.")
+      return
+    }
+
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error("Failed to fetch file")
+      const blob = await res.blob()
+      const filename = (url.split("/").pop() || `visa_${app?._id || "file"}.pdf`).split("?")[0]
+      const link = document.createElement("a")
+      link.href = URL.createObjectURL(blob)
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(link.href)
+    } catch (err) {
+      console.error("Download failed", err)
+      // Fallback: open in new tab
+      window.open(url, "_blank")
+    }
+  }
+
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
       <div className="space-y-6 sm:space-y-8">
@@ -144,6 +186,7 @@ const ClientDashboard = () => {
                   </span>
                 </div>
                 <Button
+                  onClick={downloadActiveVisa}
                   className="w-full mt-4 rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
                   variant="outline"
                 >
