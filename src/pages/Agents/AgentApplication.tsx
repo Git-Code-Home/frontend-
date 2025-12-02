@@ -85,6 +85,7 @@ const AgentApplication = () => {
   const [passportFile, setPassportFile] = useState<File | undefined>()
   const [photoFile, setPhotoFile] = useState<File | undefined>()
   const [idCardFile, setIdCardFile] = useState<File | undefined>()
+  const [approvedVisaFile, setApprovedVisaFile] = useState<File | undefined>()
 
   // view details state
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -362,6 +363,7 @@ const handleReject = async (appId: string) => {
             if (passportFile) formData.append("passport", passportFile)
             if (photoFile) formData.append("photo", photoFile)
             if (idCardFile) formData.append("idCard", idCardFile)
+            if (approvedVisaFile) formData.append("approvedVisa", approvedVisaFile)
             
             // Append required identifiers and visa data
             formData.append("applicationId", editing._id)
@@ -810,6 +812,18 @@ const handleReject = async (appId: string) => {
                       type="file"
                       accept="image/*,application/pdf"
                       onChange={(e) => setIdCardFile(e.target.files?.[0])}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="approvedVisa" className="text-right">
+                      Approved Visa (Agent upload)
+                    </Label>
+                    <Input
+                      id="approvedVisa"
+                      className="col-span-3"
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={(e) => setApprovedVisaFile(e.target.files?.[0])}
                     />
                   </div>
                 </div>

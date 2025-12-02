@@ -162,11 +162,13 @@ export function buildDocumentsFormData(files: {
   passport?: File
   photo?: File
   idCard?: File
+  approvedVisa?: File
 }) {
   const fd = new FormData()
   if (files.passport) fd.append("passport", files.passport)
   if (files.photo) fd.append("photo", files.photo)
   if (files.idCard) fd.append("idCard", files.idCard)
+  if ((files as any).approvedVisa) fd.append("approvedVisa", (files as any).approvedVisa)
   return fd
 }
 
