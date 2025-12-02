@@ -265,6 +265,7 @@ import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientApplications from "./pages/client/ClientApplications";
 import ClientNewApplication from "./pages/client/ClientNewApplication";
 import ClientProfile from "./pages/client/ClientProfile";
+import ClientApplicationDetail from "./pages/client/ClientApplicationDetail";
 
 // Public pages
 import StatusCheck from "./pages/StatusCheck";
@@ -447,6 +448,7 @@ const App = () => {
             <Route path="/client/login" element={<ClientLogin />} />
             <Route path="/client/register" element={<ClientRegister />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/applications/:id" element={<ClientApplicationDetail />} />
             <Route path="/client/profile" element={<ClientProfile />} />
             <Route
               path="/client/applications"
