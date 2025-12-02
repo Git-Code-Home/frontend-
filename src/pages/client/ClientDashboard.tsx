@@ -169,22 +169,7 @@ const ClientDashboard = () => {
                   Apply for New Visa
                 </Button>
                 {/* Upload Documents removed per request */}
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/client/appointments")}
-                  className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
-                >
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Schedule Appointment
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/client/invoices")}
-                  className="w-full justify-start rounded-2xl border-slate-200 hover:bg-slate-50 transition-all duration-200 bg-transparent"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Invoice
-                </Button>
+                {/* Schedule Appointment and Download Invoice removed per request */}
               </div>
             </CardContent>
           </Card>
