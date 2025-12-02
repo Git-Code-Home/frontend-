@@ -26,6 +26,7 @@ const ClientNewApplication = () => {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [idCardFile, setIdCardFile] = useState<File | null>(null)
   const [filledTemplateFile, setFilledTemplateFile] = useState<File | null>(null)
+  const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null)
   const [dynamicDocs, setDynamicDocs] = useState<Record<string, File | null>>({})
 
   useEffect(() => {
@@ -128,7 +129,7 @@ const ClientNewApplication = () => {
       const appId = created && created._id
 
       // If there are no files to upload, we're done
-  const hasFiles = passportFile || photoFile || idCardFile || filledTemplateFile || Object.values(dynamicDocs || {}).some((f) => !!f)
+      const hasFiles = passportFile || photoFile || idCardFile || filledTemplateFile || paymentReceiptFile || Object.values(dynamicDocs || {}).some((f) => !!f)
 
       if (!hasFiles) {
         toast({ title: "Submitted", description: "Your application was submitted.", variant: "default" })
@@ -141,6 +142,7 @@ const ClientNewApplication = () => {
       if (photoFile) fm.append("photo", photoFile)
       if (idCardFile) fm.append("idCard", idCardFile)
   if (filledTemplateFile) fm.append("filledTemplate", filledTemplateFile)
+        if (paymentReceiptFile) fm.append("paymentReceipt", paymentReceiptFile)
 
       // Append dynamic template-named required docs using the exact template keys
       Object.entries(dynamicDocs || {}).forEach(([key, file]) => {
@@ -367,6 +369,10 @@ const ClientNewApplication = () => {
                       <div className="space-y-2">
                         <Label htmlFor="filledTemplate">Filled Template (PDF)</Label>
                         <Input id="filledTemplate" type="file" accept="application/pdf" onChange={(e) => setFilledTemplateFile(e.target.files?.[0] || null)} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="paymentReceipt">Payment Receipt</Label>
+                        <Input id="paymentReceipt" type="file" accept="image/*,application/pdf" onChange={(e) => setPaymentReceiptFile(e.target.files?.[0] || null)} />
                       </div>
               </div>
 
