@@ -259,7 +259,31 @@ const ClientDashboard = () => {
                       </div>
                     )}
 
-                    {/* Action buttons removed per request (View Details & Download) */}
+                    <div className="flex flex-col sm:flex-row justify-end mt-3 space-y-2 sm:space-y-0 sm:space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/client/applications/${app._id}`)}
+                        className="rounded-2xl border-slate-200 hover:bg-slate-50 bg-transparent"
+                      >
+                        View Details
+                      </Button>
+                      {/* Download uses the first available document (prefer filledTemplate) */}
+                      {(() => {
+                        const docs = app.documents || {}
+                        const url = docs.filledTemplate || docs.paymentReceipt || docs.passport || docs.photo || Object.values(docs || {})[0]
+                        return url ? (
+                          <Button
+                            size="sm"
+                            onClick={() => window.open(url, "_blank")}
+                            className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          >
+                            <Download className="mr-1 h-3 w-3" />
+                            Download
+                          </Button>
+                        ) : null
+                      })()}
+                    </div>
                   </div>
                 ))
               )}
