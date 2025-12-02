@@ -328,7 +328,6 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
     { name: "My Clients", href: "/agent/clients", icon: Users },
     { name: "Applications", href: "/agent/applications", icon: FileText },
     { name: "Commissions", href: "/agent/commissions", icon: Wallet2 },
-    { name: "Withdrawals", href: "/agent/withdraw", icon: ArrowDownToLine },
     { name: "Profile", href: "/agent/profile", icon: Settings },
   ],
 }

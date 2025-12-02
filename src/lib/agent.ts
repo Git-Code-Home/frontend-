@@ -206,17 +206,6 @@ export async function getMyCommissions(): Promise<Commission[]> {
   }
 }
 
-export async function getMyWithdrawals(): Promise<Withdrawal[]> {
-  try {
-    return await apiFetch<Withdrawal[]>("/withdrawals", { method: "GET" })
-  } catch {
-    return []
-  }
-}
-
-export async function withdrawNow() {
-  return apiFetch<{ message: string }>("/withdraw", { method: "POST" })
-}
 
 // --------------------------------------------------
 // ✅ Notifications
