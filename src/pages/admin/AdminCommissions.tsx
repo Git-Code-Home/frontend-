@@ -121,18 +121,19 @@ export default function AdminCommissions() {
           clientList = [];
         }
 
-        // Filter by agent assignment if agentId provided
-        if (agentId) {
-          clientList = clientList.filter((c) => {
-            const a = c.assignedAgent ?? c.assignedTo ?? null;
-            if (!a) return false;
-            // a may be an ObjectId string or a populated object
-            const aid = typeof a === "string" ? a : (a._id ? String(a._id) : String(a));
-            return String(aid) === String(agentId);
-          });
+        // The backend already supports filtering by agentId; trust its response shape.
+        // Prefer `res.data.clients` when present, otherwise use the array response directly.
+        if (res && res.data) {
+          if (Array.isArray(res.data)) {
+            setClients(res.data as any[])
+          } else if (Array.isArray(res.data.clients)) {
+            setClients(res.data.clients)
+          } else {
+            setClients([])
+          }
+        } else {
+          setClients([])
         }
-
-        setClients(clientList);
       } catch (err: any) {
         console.error("loadClientsForAgent error", err?.message || err);
         setClientsError("Failed to load clients for selected agent");

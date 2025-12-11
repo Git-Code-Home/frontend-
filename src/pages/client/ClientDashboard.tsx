@@ -101,10 +101,22 @@ const ClientDashboard = () => {
       alert("No visa file available to download.")
       return
     }
+    // Normalize URL: if it's relative, prepend BASE_URL
+    const isAbsolute = /^https?:\/\//i.test(url)
+    const fetchUrl = isAbsolute ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
 
     try {
-      const res = await fetch(url)
-      if (!res.ok) throw new Error("Failed to fetch file")
+      const headers: Record<string, string> = {}
+      // If fetching from our API host, include client token if available
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("clientToken") : null
+        if (fetchUrl.startsWith(BASE_URL) && token) headers["Authorization"] = `Bearer ${token}`
+      } catch (e) {
+        /* ignore token read errors */
+      }
+
+      const res = await fetch(fetchUrl, { headers })
+      if (!res.ok) throw new Error(`Failed to fetch file: ${res.status}`)
       const blob = await res.blob()
       const filename = (url.split("/").pop() || `visa_${app?._id || "file"}.pdf`).split("?")[0]
       const link = document.createElement("a")
@@ -116,9 +128,16 @@ const ClientDashboard = () => {
       URL.revokeObjectURL(link.href)
     } catch (err) {
       console.error("Download failed", err)
-      // Fallback: open in new tab
-      window.open(url, "_blank")
+      // Fallback: open normalized URL in new tab
+      window.open(fetchUrl, "_blank")
     }
+  }
+
+  const openDocumentInNewTab = (url: string) => {
+    if (!url) return
+    const isAbsolute = /^https?:\/\//i.test(url)
+    const finalUrl = isAbsolute ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`
+    window.open(finalUrl, "_blank")
   }
 
   return (
@@ -275,7 +294,7 @@ const ClientDashboard = () => {
                         return url ? (
                           <Button
                             size="sm"
-                            onClick={() => window.open(url, "_blank")}
+                            onClick={() => openDocumentInNewTab(url)}
                             className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                           >
                             <Download className="mr-1 h-3 w-3" />
