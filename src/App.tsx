@@ -274,6 +274,8 @@ import EmployeeRoute from "./lib/EmployeeRoute";
 import AgentDashboard from "./pages/Agents/AgentDashboard";
 import AgentLogin from "./pages/Agents/AgentLogin";
 import AdminAgents from "./pages/admin/AdminAgents";
+import AdminClientApplications from "./pages/admin/ClientApplications";
+import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import Agentclients from "./pages/Agents/Agentclients";
 import AgentApplication from "./pages/Agents/AgentApplication";
 import AgentRoute from "./lib/AgentRoute";
@@ -361,6 +363,22 @@ const App = () => {
               element={
                 <AdminRoute>
                   <AdminApplications />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/client-applications"
+              element={
+                <AdminRoute>
+                  <AdminClientApplications />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/application/:id"
+              element={
+                <AdminRoute>
+                  <ApplicationDetail />
                 </AdminRoute>
               }
             />
