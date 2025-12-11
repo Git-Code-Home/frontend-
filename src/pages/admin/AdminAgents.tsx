@@ -1,165 +1,118 @@
-// "use client"
+"use client"
 
-// import type React from "react"
-// import { useEffect, useState } from "react"
-// import DashboardLayout from "@/components/DashboardLayout"
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Button } from "@/components/ui/button"
-// import { Input } from "@/components/ui/input"
-// import { Badge } from "@/components/ui/badge"
-// import { Plus, Search, Edit, Trash2, Mail, Phone, Users, MoreHorizontal, Ban } from "lucide-react"
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogFooter,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from "@/components/ui/dialog"
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-// } from "@/components/ui/alert-dialog"
-// import { Label } from "@/components/ui/label"
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-// import BASE_URL from "@/lib/BaseUrl"
+import React, { useEffect, useState } from "react"
+import DashboardLayout from "@/components/DashboardLayout"
+import BASE_URL from "@/lib/BaseUrl"
 
-// interface Employee {
-//   _id: string
-//   name: string
-//   email: string
-//   phone?: string
-//   designation?: string
-//   role?: string
-//   status?: string
-//   clients: number
-//   processed: number
-// }
+type Agent = { _id: string; name: string; email: string; phone?: string; designation?: string; isBlocked?: boolean }
 
-// const AdminAgents = () => {
-//   const [searchTerm, setSearchTerm] = useState("")
-//   const [addOpen, setAddOpen] = useState(false)
-//   const [editOpen, setEditOpen] = useState(false)
-//   const [deleteOpen, setDeleteOpen] = useState(false)
-//   const [employees, setEmployees] = useState<Employee[]>([])
-//   const [loading, setLoading] = useState(false)
-//   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
+export default function AdminAgents() {
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-//   // Add employee state
-//   const [newName, setNewName] = useState("")
-//   const [newEmail, setNewEmail] = useState("")
-//   const [newPassword, setNewPassword] = useState("")
-//   const [newPhone, setNewPhone] = useState("")
-//   const [newDesignation, setNewDesignation] = useState("")
+  // form state
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [phone, setPhone] = useState("")
+  const [designation, setDesignation] = useState("")
 
-//   // Edit employee state (kept intact to avoid disturbing existing UI)
-//   const [editName, setEditName] = useState("")
-//   const [editEmail, setEditEmail] = useState("")
-//   const [editPhone, setEditPhone] = useState("")
-//   const [editDesignation, setEditDesignation] = useState("")
-//   const [editStatus, setEditStatus] = useState("")
+  const apiBase = BASE_URL.replace(/\/$/, "")
 
-//   const fetchEmployees = async () => {
-//     try {
-//       setLoading(true)
-//       const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
+  function getAuthHeader() {
+    if (typeof window === "undefined") return {}
+    const token = localStorage.getItem("adminToken")
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
 
-//       const res = await fetch(`${BASE_URL}/public/agents`, {
-//         method: "GET",
-//         headers: {
-//           "Content-Type": "application/json",
-//           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//         },
-//       })
+  const fetchAgents = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const url = `${apiBase}/api/public/agents`
+      const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json", ...getAuthHeader() } })
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(body?.message || `Failed to load agents (${res.status})`)
+      const list = Array.isArray(body) ? body : body?.agents || []
+      setAgents(list)
+    } catch (e: any) {
+      setError(e.message || String(e))
+      setAgents([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
-//       const data = await res.json()
-//       if (!res.ok) {
-//         throw new Error(data?.message || "Failed to fetch agents")
-//       }
+  useEffect(() => { fetchAgents() }, [])
 
-//       // Map backend agents to existing UI structure without disrupting UI
-//       const mapped: Employee[] = (Array.isArray(data) ? data : []).map((a: any) => ({
-//         _id: a._id,
-//         name: a.name,
-//         email: a.email,
-//         phone: a.phone || "",
-//         designation: a.designation || "",
-//         role: a.role || "agent",
-//         status: a.isBlocked ? "Inactive" : "Active",
-//         clients: a.clients ?? 0,
-//         processed: a.processed ?? 0,
-//       }))
-//       setEmployees(mapped)
-//     } catch (error: any) {
-//       console.error("Error fetching agents:", error.message)
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    try {
+      const url = `${apiBase}/api/public/agents`
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeader() },
+        body: JSON.stringify({ name, email, password, phone, designation }),
+      })
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(body?.message || `Failed to create agent (${res.status})`)
+      const newAgent = body?.agent || body
+      setAgents((s) => [...s, newAgent])
+      // reset form
+      setName("")
+      setEmail("")
+      setPassword("")
+      setPhone("")
+      setDesignation("")
+      alert("Agent created")
+    } catch (e: any) {
+      setError(e.message || String(e))
+      alert(e.message || String(e))
+    }
+  }
 
-//   useEffect(() => {
-//     fetchEmployees()
-//   }, [])
+  return (
+    <DashboardLayout userRole="admin" userName="Admin User">
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold mb-4">Agents</h1>
+        {loading && <p>Loading agents...</p>}
+        {error && <p className="text-red-600">{error}</p>}
 
-//   const handleAddEmployee = async (e: React.FormEvent) => {
-//     const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : null
-//     e.preventDefault()
-//     try {
-//       const res = await fetch(`${BASE_URL}/public/agents`, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//         },
-//         // Only required fields by the API; extra fields included if backend supports them
-//         body: JSON.stringify({
-//           name: newName,
-//           email: newEmail,
-//           password: newPassword,
-//           phone: newPhone,
-//           designation: newDesignation,
-//         }),
-//       })
+        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="p-2 border" required />
+          <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="p-2 border" required />
+          <input placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="p-2 border" required />
+          <input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} className="p-2 border" />
+          <input placeholder="Designation" value={designation} onChange={(e) => setDesignation(e.target.value)} className="p-2 border" />
+          <div>
+            <button type="submit" className="px-4 py-2 bg-sky-600 text-white rounded">Create Agent</button>
+          </div>
+        </form>
 
-//       const data = await res.json()
-
-//       if (!res.ok) {
-//         alert(data?.message || "Failed to add agent")
-//         return
-//       }
-
-//       const agent = data?.agent ?? data
-//       const newEmp: Employee = {
-//         _id: agent._id,
-//         name: agent.name,
-//         email: agent.email,
-//         phone: newPhone,
-//         designation: newDesignation,
-//         role: agent.role || "agent",
-//         status: agent.isBlocked ? "Inactive" : "Active",
-//         clients: 0,
-//         processed: 0,
-//       }
-
-//       setEmployees((prev) => [...prev, newEmp])
-//       setAddOpen(false)
-//       setNewName("")
-//       setNewEmail("")
-//       setNewPassword("")
-//       setNewPhone("")
-//       setNewDesignation("")
-//     } catch (error) {
-//       console.error("Error adding agent:", error)
-//     }
-//   }
+        <div className="bg-white rounded shadow p-4">
+          <h2 className="font-semibold mb-2">Existing Agents</h2>
+          {agents.length === 0 ? (
+            <div className="text-muted-foreground">No agents found.</div>
+          ) : (
+            <ul className="space-y-2">
+              {agents.map((a) => (
+                <li key={a._id} className="flex justify-between items-center border-b py-2">
+                  <div>
+                    <div className="font-medium">{a.name}</div>
+                    <div className="text-xs text-gray-500">{a.email}</div>
+                  </div>
+                  <div className="text-sm text-gray-600">{a.isBlocked ? "Blocked" : "Active"}</div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  )
+}
 
 //  const handleEditEmployee = async (e: React.FormEvent) => {
 //   e.preventDefault();
