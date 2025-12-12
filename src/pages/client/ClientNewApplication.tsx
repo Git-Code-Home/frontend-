@@ -177,7 +177,7 @@ const ClientNewApplication = () => {
   const handleDownloadRequired = async () => {
     try {
       setDownloading(true)
-      const res = await fetch(`/documents/FORM%20FOR%20CLIENT.pdf`)
+      const res = await fetch(`/document/FORM%20FOR%20CLIENT.pdf`)
       if (!res.ok) throw new Error(`Failed to fetch document: ${res.status}`)
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -198,7 +198,7 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    window.open('/documents/FORM%20FOR%20CLIENT.pdf', '_blank')
+    window.open('/document/FORM%20FOR%20CLIENT.pdf', '_blank')
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
