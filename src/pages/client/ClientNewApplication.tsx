@@ -384,7 +384,7 @@ const ClientNewApplication = () => {
                 <Button
                   type="button"
                   onClick={handleViewRequired}
-                  className="rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6"
+                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6"
                 >
                   <Eye className="mr-2 h-4 w-4" />
                   View Required Document
