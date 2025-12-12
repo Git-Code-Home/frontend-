@@ -35,56 +35,53 @@ export default function AdminCommissions() {
     try {
       const token = localStorage.getItem("adminToken");
 
-
-      // Use centralized adminApi (handles token + redirects) for admin-only endpoints
-      let agentsRes;
+      // Fetch agents using centralized adminApi
+      let agentsList: User[] = []
       try {
-        agentsRes = await adminApi.get("/agents")
+        const agentsRes = await adminApi.get("/agents")
+        // adminApi returns parsed JSON directly
+        if (Array.isArray(agentsRes)) {
+          agentsList = agentsRes
+        } else if (agentsRes && Array.isArray(agentsRes.agents)) {
+          agentsList = agentsRes.agents
+        } else {
+          console.warn("Unexpected agents response format:", agentsRes)
+        }
       } catch (e) {
         // fallback to public agents endpoint if admin agents is not available
         try {
           const r = await api.get("/public/agents", { headers: { Authorization: `Bearer ${token}` } })
-          agentsRes = r.data
+          const data = r?.data ?? r
+          agentsList = Array.isArray(data) ? data : (Array.isArray(data?.agents) ? data.agents : [])
         } catch (err) {
-          agentsRes = null
+          console.warn("Failed to fetch agents from fallback:", err)
         }
       }
 
-      // clients endpoint (admin-only) returns { clients, applications }
-      let clientsRes
+      setAgents(agentsList)
+
+      // Initially load all clients (without agent filter) so the full list is available
+      // When user selects an agent, the useEffect will reload filtered clients
       try {
-        clientsRes = await adminApi.get("/clients")
+        const clientsRes = await adminApi.get("/clients")
+        if (clientsRes && Array.isArray(clientsRes.clients)) {
+          setClients(clientsRes.clients)
+          setApplications(Array.isArray(clientsRes.applications) ? clientsRes.applications : [])
+        } else if (Array.isArray(clientsRes)) {
+          setClients(clientsRes)
+          setApplications([])
+        } else {
+          setClients([])
+          setApplications([])
+        }
       } catch (e) {
-        // fall back to public or empty
-        clientsRes = null
-      }
-
-      // parse agents
-      if (agentsRes) {
-        if (Array.isArray(agentsRes.data)) setAgents(agentsRes.data as User[])
-        else if (Array.isArray(agentsRes)) setAgents(agentsRes as User[])
-        else if (agentsRes.data && Array.isArray(agentsRes.data.agents)) setAgents(agentsRes.data.agents as User[])
-        else setAgents([])
-      } else {
-        setAgents([])
-      }
-
-      // parse clients and applications
-      if (!clientsRes) {
+        console.warn("Failed to fetch initial clients:", e)
         setClients([])
         setApplications([])
-      } else if (Array.isArray(clientsRes.data)) {
-        setClients(clientsRes.data as User[])
-        setApplications([])
-      } else {
-        const cd: any = clientsRes.data || clientsRes
-        setClients(Array.isArray(cd.clients) ? cd.clients : [])
-        setApplications(Array.isArray(cd.applications) ? cd.applications : [])
       }
     } catch (err: any) {
       console.error("fetchMeta error", err?.message || err);
       setMetaError("Failed to load agents or clients. Check network/auth.");
-      // leave agents/clients/apps as empty arrays to avoid crashes
       setAgents([]);
       setClients([]);
       setApplications([]);
@@ -120,20 +117,17 @@ export default function AdminCommissions() {
       setClientsError(null);
       setClientsLoading(true);
       try {
-        // Use adminApi so token handling + redirects are centralized
+        // adminApi.get returns parsed JSON directly (not wrapped in .data)
         const res = await adminApi.get(`/clients?agentId=${agentId}`)
-        // adminApi returns parsed JSON for JSON responses. Response shape may be { clients, applications } or an array.
+        // Backend returns { clients: [...], applications: [...] }
         if (!res) {
           setClients([])
-        } else if (Array.isArray(res)) {
-          setClients(res as any[])
         } else if (Array.isArray(res.clients)) {
           setClients(res.clients)
-        } else if (Array.isArray(res.data)) {
-          setClients(res.data)
-        } else if (res.data && Array.isArray(res.data.clients)) {
-          setClients(res.data.clients)
+        } else if (Array.isArray(res)) {
+          setClients(res)
         } else {
+          console.warn("Unexpected clients response format:", res)
           setClients([])
         }
       } catch (err: any) {
@@ -147,7 +141,9 @@ export default function AdminCommissions() {
     // clear selection when agent changes
     setClientId("");
     setApplicationId("");
+    setApplications([]);
     if (agentId) loadClientsForAgent();
+    else setClients([]);
   }, [agentId]);
 
   // When client changes, load approved applications for that client
@@ -156,25 +152,30 @@ export default function AdminCommissions() {
       setAppsError(null);
       setAppsLoading(true);
       try {
-        // Use adminApi for applications endpoint
+        // adminApi.get returns parsed JSON directly
         const res = await adminApi.get(`/applications?clientId=${clientId}&status=approved`)
         let appList: any[] = []
+        
+        // Backend may return { applications: [...] } or an array directly
         if (!res) {
           appList = []
         } else if (Array.isArray(res)) {
           appList = res
         } else if (Array.isArray(res.applications)) {
           appList = res.applications
-        } else if (Array.isArray(res.data)) {
-          appList = res.data
-        } else if (res.data && Array.isArray(res.data.applications)) {
-          appList = res.data.applications
         } else {
+          console.warn("Unexpected applications response format:", res)
           appList = []
         }
 
-        // Filter approved and by client
-        appList = appList.filter((a) => String(a.client?._id || a.client) === String(clientId) && (a.applicationStatus || a.status) === "approved")
+        // Filter approved applications that belong to the selected client
+        appList = appList.filter((a) => {
+          const appClientId = a.client?._id || a.client
+          const isClientMatch = String(appClientId) === String(clientId)
+          const status = a.applicationStatus || a.status
+          const isApproved = status === "approved"
+          return isClientMatch && isApproved
+        })
 
         setApplications(appList)
       } catch (err: any) {
@@ -187,6 +188,7 @@ export default function AdminCommissions() {
 
     setApplicationId("");
     if (clientId) loadAppsForClient();
+    else setApplications([]);
   }, [clientId]);
 
   const handleCreate = async (e: React.FormEvent) => {
