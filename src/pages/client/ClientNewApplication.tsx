@@ -386,7 +386,7 @@ const ClientNewApplication = () => {
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                 <a
-                  href="/documents/FORM FOR CLIENT.pdf"
+                  href="/documents/FORM%20FOR%20CLIENT.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6 py-2"
