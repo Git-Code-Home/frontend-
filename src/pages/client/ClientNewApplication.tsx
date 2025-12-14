@@ -175,8 +175,8 @@ const ClientNewApplication = () => {
   const [downloading, setDownloading] = useState(false)
 
   const handleDownloadRequired = async () => {
-    if (!template?.formPdfUrl) {
-      toast({ title: "Error", description: "No template PDF available", variant: "destructive" })
+    if (!template) {
+      toast({ title: "Error", description: "Please select a country first", variant: "destructive" })
       return
     }
     try {
@@ -202,8 +202,8 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    if (!template?.formPdfUrl) {
-      toast({ title: "Error", description: "No template PDF available", variant: "destructive" })
+    if (!template) {
+      toast({ title: "Error", description: "Please select a country first", variant: "destructive" })
       return
     }
     window.open(template.formPdfUrl, '_blank')
