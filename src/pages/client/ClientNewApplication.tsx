@@ -202,11 +202,7 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    if (!template) {
-      toast({ title: "Error", description: "Please select a country first", variant: "destructive" })
-      return
-    }
-    window.open(template.formPdfUrl, '_blank')
+    window.open('/documents/FORM FOR CLIENT.pdf', '_blank')
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
