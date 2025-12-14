@@ -175,16 +175,20 @@ const ClientNewApplication = () => {
   const [downloading, setDownloading] = useState(false)
 
   const handleDownloadRequired = async () => {
+    if (!template?.formPdfUrl) {
+      toast({ title: "Error", description: "No template PDF available", variant: "destructive" })
+      return
+    }
     try {
       setDownloading(true)
-      const res = await fetch(`/documents/FORM%20FOR%20CLIENT.pdf`)
+      const res = await fetch(template.formPdfUrl)
       if (!res.ok) throw new Error(`Failed to fetch document: ${res.status}`)
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
       // Use the friendly filename when saving
-      a.download = "FORM FOR CLIENT.pdf"
+      a.download = `${template.title || "form"}.pdf`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -198,7 +202,11 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    window.open('/documents/FORM%20FOR%20CLIENT.pdf', '_blank')
+    if (!template?.formPdfUrl) {
+      toast({ title: "Error", description: "No template PDF available", variant: "destructive" })
+      return
+    }
+    window.open(template.formPdfUrl, '_blank')
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
