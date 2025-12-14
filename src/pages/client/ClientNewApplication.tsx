@@ -202,8 +202,7 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    const pdfPath = encodeURI('/documents/FORM FOR CLIENT.pdf')
-    window.open(pdfPath, '_blank')
+    window.open('/required-document', '_blank')
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">

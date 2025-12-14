@@ -265,8 +265,7 @@ import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientApplications from "./pages/client/ClientApplications";
 import ClientNewApplication from "./pages/client/ClientNewApplication";
 import ClientProfile from "./pages/client/ClientProfile";
-import ClientApplicationDetail from "./pages/client/ClientApplicationDetail";
-
+import ClientApplicationDetail from "./pages/client/ClientApplicationDetail";import RequiredDocumentPage from "./pages/RequiredDocumentPage"
 // Public pages
 import StatusCheck from "./pages/StatusCheck";
 import AdminRoute from "./lib/AdminRoute";
@@ -479,6 +478,7 @@ const App = () => {
 
             {/* Public Routes */}
             <Route path="/status" element={<StatusCheck />} />
+            <Route path="/required-document" element={<RequiredDocumentPage />} />
 
             {/* Catch-All Route */}
             <Route path="*" element={<NotFound />} />
