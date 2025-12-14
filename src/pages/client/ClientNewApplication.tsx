@@ -202,7 +202,7 @@ const ClientNewApplication = () => {
   }
 
   const handleViewRequired = () => {
-    window.open('/documents/FORM FOR CLIENT.pdf', '_blank')
+    window.open('./public/documents/FORM FOR CLIENT.pdf', '_blank')
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
