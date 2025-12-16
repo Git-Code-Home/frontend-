@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Upload, Send } from "lucide-react"
+import { FileText, Upload, Send, ClipboardList } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import FieldRenderer from "@/components/FieldRenderer"
@@ -171,6 +171,10 @@ const ClientNewApplication = () => {
       console.error("Client new application submit failed:", err)
       toast({ title: "Error", description: err?.message || "Failed to submit", variant: "destructive" })
     }
+  }
+
+  const handleOpenRequiredDocument = () => {
+    navigate("/required-document")
   }
   return (
     <DashboardLayout userRole="client" userName="Ahmed Hassan">
@@ -353,6 +357,10 @@ const ClientNewApplication = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
+                <Button type="button" onClick={handleOpenRequiredDocument} className="rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Fill Required Document
+                </Button>
                 <Button type="submit" className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200 px-6">
                   <Send className="mr-2 h-4 w-4" />
                   Submit Application
