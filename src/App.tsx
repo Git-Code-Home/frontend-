@@ -277,6 +277,7 @@ import AgentDashboard from "./pages/Agents/AgentDashboard";
 import AgentLogin from "./pages/Agents/AgentLogin";
 import AdminAgents from "./pages/admin/AdminAgents";
 import AdminClientApplications from "./pages/admin/ClientApplications";
+import AdminClientApplicationsDetail from "./pages/admin/AdminClientApplicationsDetail";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import Agentclients from "./pages/Agents/Agentclients";
 import AgentApplication from "./pages/Agents/AgentApplication";
@@ -373,6 +374,14 @@ const App = () => {
               element={
                 <AdminRoute>
                   <AdminClientApplications />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/clients/:clientId/applications"
+              element={
+                <AdminRoute>
+                  <AdminClientApplicationsDetail />
                 </AdminRoute>
               }
             />
