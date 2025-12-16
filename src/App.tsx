@@ -265,7 +265,10 @@ import ClientDashboard from "./pages/client/ClientDashboard";
 import ClientApplications from "./pages/client/ClientApplications";
 import ClientNewApplication from "./pages/client/ClientNewApplication";
 import ClientProfile from "./pages/client/ClientProfile";
-import ClientApplicationDetail from "./pages/client/ClientApplicationDetail";import RequiredDocumentPage from "./pages/RequiredDocumentPage"
+import ClientApplicationDetail from "./pages/client/ClientApplicationDetail"
+import RequiredDocumentPage from "./pages/RequiredDocumentPage"
+import AdminRequiredDocuments from "./pages/admin/AdminRequiredDocuments"
+import AdminRequiredDocumentDetail from "./pages/admin/AdminRequiredDocumentDetail"
 // Public pages
 import StatusCheck from "./pages/StatusCheck";
 import AdminRoute from "./lib/AdminRoute";
@@ -403,6 +406,22 @@ const App = () => {
               element={
                 <AdminRoute>
                   <AdminSettings />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/required-documents"
+              element={
+                <AdminRoute>
+                  <AdminRequiredDocuments />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/required-documents/:id"
+              element={
+                <AdminRoute>
+                  <AdminRequiredDocumentDetail />
                 </AdminRoute>
               }
             />

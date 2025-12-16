@@ -102,9 +102,13 @@ const RequiredDocumentPage = () => {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err?.message || "Failed to submit application")
+        console.error("API Error:", err)
+        throw new Error(err?.message || `HTTP ${res.status}: Failed to submit application`)
       }
 
+      const data = await res.json()
+      console.log("Submission successful:", data)
+      
       toast({ title: "Success", description: "Your application has been submitted to the admin", variant: "default" })
       setFormData({
         fullName: "",

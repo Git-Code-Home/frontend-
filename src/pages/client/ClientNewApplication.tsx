@@ -122,10 +122,12 @@ const ClientNewApplication = () => {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err?.message || "Failed to create application")
+        console.error("Create application error:", err, "Status:", res.status)
+        throw new Error(err?.message || `HTTP ${res.status}: Failed to create application`)
       }
 
       const created = await res.json()
+      console.log("Application created:", created)
       const appId = created && created._id
 
       // If there are no files to upload, we're done
@@ -163,9 +165,12 @@ const ClientNewApplication = () => {
 
       if (!upRes.ok) {
         const err = await upRes.json().catch(() => ({}))
-        throw new Error(err?.message || "Failed to upload documents")
+        console.error("Upload error:", err, "Status:", upRes.status)
+        throw new Error(err?.message || `HTTP ${upRes.status}: Failed to upload documents`)
       }
 
+      console.log("Documents uploaded successfully")
+      
       toast({ title: "Submitted", description: "Your application and documents were uploaded.", variant: "default" })
     } catch (err: any) {
       console.error("Client new application submit failed:", err)

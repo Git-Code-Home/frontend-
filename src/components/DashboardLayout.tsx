@@ -306,6 +306,7 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
     { name: "Clients", href: "/admin/clients", icon: Users },
     { name: "Client Applications", href: "/admin/client-applications", icon: FileText },
     { name: "Applications", href: "/admin/applications", icon: FileText },
+    { name: "Required Documents", href: "/admin/required-documents", icon: FileText },
     { name: "Reports", href: "/admin/reports", icon: LayoutDashboard },
     { name: "Settings", href: "/admin/settings", icon: Settings },
 
