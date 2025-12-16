@@ -175,20 +175,16 @@ const ClientNewApplication = () => {
   const [downloading, setDownloading] = useState(false)
 
   const handleDownloadRequired = async () => {
-    if (!template) {
-      toast({ title: "Error", description: "Please select a country first", variant: "destructive" })
-      return
-    }
     try {
       setDownloading(true)
-      const res = await fetch(template.formPdfUrl)
+      const res = await fetch("/documents/FORM FOR CLIENT.pdf")
       if (!res.ok) throw new Error(`Failed to fetch document: ${res.status}`)
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
       // Use the friendly filename when saving
-      a.download = `${template.title || "form"}.pdf`
+      a.download = "FORM FOR CLIENT.pdf"
       document.body.appendChild(a)
       a.click()
       a.remove()
