@@ -2050,6 +2050,7 @@ import { useToast } from "@/hooks/use-toast"
 import { createApplication, uploadApplicationDocuments, getMyClients, getCountries, getTemplateByCountry } from "../../lib/employee"
 import FieldRenderer from "@/components/FieldRenderer"
 import BASE_URL from "@/lib/BaseUrl"
+import { Textarea } from "@/components/ui/textarea"
 
 type ApplicationItem = {
   id: string
@@ -2079,6 +2080,7 @@ const EmployeeApplications = () => {
   const [openCreate, setOpenCreate] = useState(false)
   const [clientId, setClientId] = useState("")
   const [visaTypeCreate, setVisaTypeCreate] = useState("")
+  const [description, setDescription] = useState("")
 
   // Existing files
   const [passportFile, setPassportFile] = useState<File | null>(null)
@@ -2296,6 +2298,7 @@ const EmployeeApplications = () => {
         visaType: visaTypeCreate,
         country: effectiveCountry,
         formData: formDataDynamic,
+        description: description,
       } as any)
 
       // gather files (legacy + dynamic requiredDocs)
@@ -2331,6 +2334,7 @@ const EmployeeApplications = () => {
       // Reset form
       setClientId("")
       setVisaTypeCreate("")
+      setDescription("")
       setPassportFile(null)
       setPhotoFile(null)
       setIdCardFile(null)
@@ -2607,6 +2611,17 @@ const EmployeeApplications = () => {
                       <SelectItem value="Transit Visa">Transit Visa</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description / Comments about Client</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Add any notes or comments about the client or this application..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="rounded-2xl border-slate-200 focus:border-blue-400 focus:ring-blue-400 resize-none h-24"
+                  />
                 </div>
 
                 {/* Dynamic template fields (if template exists) */}
