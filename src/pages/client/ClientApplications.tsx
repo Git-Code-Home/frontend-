@@ -2,15 +2,21 @@ import DashboardLayout from "@/components/DashboardLayout"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, Download, Eye } from "lucide-react"
+import { FileText, Download, Eye, CreditCard } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useState } from "react"
+import PaymentDialog from "@/components/PaymentDialog"
 
 const ClientApplications = () => {
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [selectedAppForPayment, setSelectedAppForPayment] = useState<string | null>(null)
+  
   const applications = [
     {
       id: "VA025",
       type: "Tourist Visa",
       status: "Approved",
+      paymentStatus: "paid",
       submitDate: "2024-01-10",
       issueDate: "2024-01-15",
       expiryDate: "2024-07-15",
@@ -20,6 +26,7 @@ const ClientApplications = () => {
       id: "VA026",
       type: "Business Visa",
       status: "Under Review",
+      paymentStatus: "pending",
       submitDate: "2024-01-14",
       issueDate: null,
       expiryDate: null,
@@ -36,6 +43,29 @@ const ClientApplications = () => {
       default:
         return "bg-slate-100 text-slate-800 border-slate-200"
     }
+  }
+
+  const getPaymentStatusColor = (paymentStatus: string) => {
+    switch (paymentStatus) {
+      case "paid":
+        return "bg-green-100 text-green-800 border-green-200"
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      default:
+        return "bg-slate-100 text-slate-800 border-slate-200"
+    }
+  }
+
+  const handlePaymentClick = (appId: string) => {
+    setSelectedAppForPayment(appId)
+    setPaymentDialogOpen(true)
+  }
+
+  const handlePaymentSuccess = (gateway: "stripe" | "paypal") => {
+    setPaymentDialogOpen(false)
+    // Refresh applications or show success message
+    alert(`Payment successful via ${gateway}!`)
+    // In production, you'd refetch the applications list
   }
 
   const navigate = useNavigate()
@@ -67,7 +97,12 @@ const ClientApplications = () => {
                       <p className="text-sm text-slate-600">Application {app.id}</p>
                     </div>
                   </div>
-                  <Badge className={`${getStatusColor(app.status)} rounded-full px-3 py-1 border`}>{app.status}</Badge>
+                  <div className="flex gap-2">
+                    <Badge className={`${getStatusColor(app.status)} rounded-full px-3 py-1 border`}>{app.status}</Badge>
+                    <Badge className={`${getPaymentStatusColor(app.paymentStatus)} rounded-full px-3 py-1 border`}>
+                      {app.paymentStatus === "paid" ? "✓ Paid" : "⏳ Pending"}
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
@@ -103,6 +138,16 @@ const ClientApplications = () => {
                     <Eye className="mr-1 h-4 w-4" />
                     View Details
                   </Button>
+                  {app.paymentStatus === "pending" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handlePaymentClick(app.id)}
+                      className="rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                    >
+                      <CreditCard className="mr-1 h-4 w-4" />
+                      Pay Now
+                    </Button>
+                  )}
                   {app.status === "Approved" && (
                     <Button
                       size="sm"
@@ -119,6 +164,18 @@ const ClientApplications = () => {
           ))}
         </div>
       </div>
+
+      {/* Payment Dialog */}
+      {selectedAppForPayment && (
+        <PaymentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          applicationId={selectedAppForPayment}
+          amount="100"
+          visaType={applications.find((a) => a.id === selectedAppForPayment)?.type || "Visa"}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
+      )}
     </DashboardLayout>
   )
 }
