@@ -228,7 +228,7 @@ import axios from "axios"
 import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Shield, Bell, Wallet2, ArrowDownToLine } from "lucide-react"
+import { LayoutDashboard, Users, FileText, Settings, LogOut, Menu, X, Shield, Bell, Wallet2, ArrowDownToLine, Database } from "lucide-react"
 import BASE_URL from "@/lib/BaseUrl"
 import api from "@/lib/api"
 
@@ -307,6 +307,7 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => {
     { name: "Client Applications", href: "/admin/client-applications", icon: FileText },
     { name: "Applications", href: "/admin/applications", icon: FileText },
     { name: "Required Documents", href: "/admin/required-documents", icon: FileText },
+    { name: "Backup & Restore", href: "/admin/backup", icon: Database },
     { name: "Reports", href: "/admin/reports", icon: LayoutDashboard },
     { name: "Settings", href: "/admin/settings", icon: Settings },
 
